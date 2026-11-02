@@ -2,8 +2,6 @@ node_modules/
 .next/
 .env*
 !.env.example
-.env
-.env.*
 out/
 dist/
 build/
@@ -12,7 +10,12 @@ coverage/
 .turbo/
 *.log
 backup-*/
-backup-*/**
+backup-/**
 *.pem
 *.p12
 *.pfx
+*.bak
+__pycache__/
+*.pyc
+.venv/
+*.tsbuildinfo

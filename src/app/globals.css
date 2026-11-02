@@ -547,3 +547,21 @@
   .lp-footer{padding:27px 19px;gap:16px}
   .lp-footer>p{width:100%;margin:0}
 }
+/* Kelas yang dipakai halaman tapi belum didefinisikan (perbaikan 2 Nov 2026).
+   Mengikuti token warna yang sudah ada: --bg/--panel/--line/--text/--muted/--green. */
+.lp-flow-list{display:grid}
+.token-balance{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#111e22,#0b1418)}
+.token-balance small{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);font-weight:700}
+.token-balance strong{font:800 28px Manrope,sans-serif}
+.token-balance strong span{font-size:13px;font-weight:600;color:var(--muted)}
+.token-balance p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.token-symbol{font-size:34px;color:var(--green)}
+.token-packages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.token-package{padding:20px;border:1px solid #263c3d;border-radius:13px;background:#0c1518}
+.token-package small{color:var(--green);font-size:10px;letter-spacing:1.5px;font-weight:700}
+.token-package strong{display:block;font:800 22px Manrope,sans-serif;margin:8px 0 2px}
+.token-package strong span{font-size:12px;font-weight:600;color:var(--muted)}
+.token-package h3{font:800 17px Manrope,sans-serif;margin:4px 0}
+.token-package p{color:var(--muted);font-size:12px;line-height:1.6}
+.token-featured{border-color:#2d5748;background:linear-gradient(145deg,#132a20,#0c1518)}
+@media(max-width:850px){.token-packages{grid-template-columns:1fr}}

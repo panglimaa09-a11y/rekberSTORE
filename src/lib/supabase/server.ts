@@ -1,11 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseEnv } from "./env";
 
 export async function supabaseServer() {
   const store = await cookies();
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url, key } = getSupabaseEnv();
 
   if (!url || !key) {
     throw new Error("Supabase environment belum diisi");
@@ -30,7 +30,7 @@ export async function supabaseServer() {
         } catch {
           // Cookie tidak dapat diubah pada Server Component.
         }
-      }
-    }
+      },
+    },
   });
 }

@@ -24,6 +24,19 @@ static std::string lower_text(const char* input) {
     return result;
 }
 
+static std::string trim_text(const char* input) {
+    if (!input) return "";
+    std::string result(input);
+    const auto not_space = [](unsigned char c) {
+        return std::isspace(c) == 0;
+    };
+    const auto first = std::find_if(result.begin(), result.end(), not_space);
+    const auto last =
+        std::find_if(result.rbegin(), result.rend(), not_space).base();
+    if (first >= last) return "";
+    return std::string(first, last);
+}
+
 RS_EXPORT int rs_validate_listing(
     const char* title,
     const char* category,
@@ -31,7 +44,10 @@ RS_EXPORT int rs_validate_listing(
     long long price,
     int ownership_confirmed
 ) {
-    if (!title || std::strlen(title) < 5 || std::strlen(title) > 100)
+    // Samakan dengan fallback Python: panjang dihitung setelah trim,
+    // agar judul "     " tidak lolos di C++ tapi gagal di Python.
+    const std::string title_trimmed = trim_text(title);
+    if (title_trimmed.size() < 5 || title_trimmed.size() > 100)
         return 1;
 
     if (!category)
@@ -48,7 +64,8 @@ RS_EXPORT int rs_validate_listing(
     if (std::find(allowed.begin(), allowed.end(), category) == allowed.end())
         return 2;
 
-    if (!description || std::strlen(description) < 20 || std::strlen(description) > 3000)
+    const std::string description_trimmed = trim_text(description);
+    if (description_trimmed.size() < 20 || description_trimmed.size() > 3000)
         return 3;
 
     if (price < 1000 || price > 1000000000000LL)
