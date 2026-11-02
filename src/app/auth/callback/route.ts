@@ -11,12 +11,14 @@ export async function GET(request: Request) {
   }
 
   const code = searchParams.get("code");
-  if (code) {
-    const supabase = await supabaseServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
-      return NextResponse.redirect(`${origin}/login?error=auth`);
-    }
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login?error=auth`);
+  }
+
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    return NextResponse.redirect(`${origin}/login?error=auth`);
   }
 
   // Hanya izinkan redirect internal, cegah open-redirect via ?next=.
