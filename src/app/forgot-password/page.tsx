@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requestPasswordReset } from "@/app/actions";
 import SubmitButton from "@/components/SubmitButton";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default async function ForgotPassword({
   searchParams,
@@ -8,6 +9,9 @@ export default async function ForgotPassword({
   searchParams: Promise<{ error?: string; sent?: string }>;
 }) {
   const p = await searchParams;
+  // Dibaca di server saat render (bukan inline saat build): bila env
+  // belum diisi, widget tidak tampil dan form tetap berfungsi normal.
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   return (
     <main className="auth">
       <section className="authbox">
@@ -39,6 +43,7 @@ export default async function ForgotPassword({
             Email
             <input name="email" type="email" required autoComplete="email" />
           </label>
+          {turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} />}
           <SubmitButton className="btn full" pendingLabel="Mengirim…">
             Kirim link reset
           </SubmitButton>

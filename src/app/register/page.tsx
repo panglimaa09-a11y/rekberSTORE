@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { register, loginWithGoogle } from "@/app/actions";
 import SubmitButton from "@/components/SubmitButton";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default async function Register({
   searchParams,
@@ -8,6 +9,9 @@ export default async function Register({
   searchParams: Promise<{ error?: string; success?: string }>;
 }) {
   const p = await searchParams;
+  // Dibaca di server saat render (bukan inline saat build): bila env
+  // belum diisi, widget tidak tampil dan form tetap berfungsi normal.
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   return (
     <main className="auth">
       <section className="authbox">
@@ -53,6 +57,7 @@ export default async function Register({
             Password
             <input name="password" type="password" minLength={8} required />
           </label>
+          {turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} />}
           <SubmitButton className="btn full" pendingLabel="Memproses…">
             Buat akun
           </SubmitButton>

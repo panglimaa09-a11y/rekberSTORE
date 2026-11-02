@@ -5,6 +5,14 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { supabaseServer } from "@/lib/supabase/server";
 
+// Token Turnstile dari hidden field form (bila widget dirender).
+// Hanya diteruskan bila ada; tanpa token pun Supabase tetap memproses
+// selama perlindungan bot belum diaktifkan di dashboard.
+function captchaFrom(form: FormData): string | undefined {
+  const value = String(form.get("captcha_token") || "").trim();
+  return value ? value : undefined;
+}
+
 export async function login(form: FormData) {
   const p = z
     .object({ email: z.string().email(), password: z.string().min(8) })
@@ -14,7 +22,11 @@ export async function login(form: FormData) {
     });
   if (!p.success) redirect("/login?error=invalid");
   const s = await supabaseServer();
-  const { error } = await s.auth.signInWithPassword(p.data);
+  const captchaToken = captchaFrom(form);
+  const { error } = await s.auth.signInWithPassword({
+    ...p.data,
+    ...(captchaToken ? { options: { captchaToken } } : {}),
+  });
   if (error) {
     // Bedakan penyebab agar tidak menebak: Supabase mengembalikan
     // kode/pesan berbeda untuk email belum terkonfirmasi vs kredensial salah.
@@ -62,12 +74,14 @@ export async function register(form: FormData) {
     (await headers()).get("origin") ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000";
+  const captchaToken = captchaFrom(form);
   const { error } = await s.auth.signUp({
     email: p.data.email,
     password: p.data.password,
     options: {
       data: { display_name: p.data.name },
       emailRedirectTo: `${origin.replace(/\/+$/, "")}/auth/callback`,
+      ...(captchaToken ? { captchaToken } : {}),
     },
   });
   if (error) redirect("/register?error=failed");
@@ -128,8 +142,10 @@ export async function requestPasswordReset(form: FormData) {
     (await headers()).get("origin") ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000";
+  const captchaToken = captchaFrom(form);
   const { error } = await s.auth.resetPasswordForEmail(p.data.email, {
     redirectTo: `${origin.replace(/\/+$/, "")}/auth/callback?next=/reset-password`,
+    ...(captchaToken ? { captchaToken } : {}),
   });
   if (error) redirect("/forgot-password?error=failed");
   redirect("/forgot-password?sent=1");
