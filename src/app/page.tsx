@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -116,49 +117,62 @@ export default function Home() {
   return (
     <main className="lp">
       <nav className="lp-nav">
-        <Link href="/" className="lp-brand">
-          <span className="lp-brand-mark">◈</span>
-          REKBER<span>STORE</span>
+        <Link href="/" className="lp-brand" aria-label="RekberStore — Beranda">
+          <Image
+            className="lp-brand-logo"
+            src="/brand/rekberstore-logo.png"
+            alt="RekberStore"
+            width="1536"
+            height="1024"
+          />
         </Link>
 
         <div className="lp-nav-links">
-          <a href="#fitur">Fitur</a>
+          <Link href="/" className="lp-nav-home">Beranda</Link>
           <a href="#cara-kerja">Cara Kerja</a>
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#biaya">Biaya</a>
+          <a href="#fitur">Layanan</a>
+          <a href="#biaya">Harga</a>
           <a href="#faq">FAQ</a>
         </div>
 
         <div className="lp-nav-actions">
           <Link href="/login" className="lp-login">Masuk</Link>
-          <Link href="/register" className="lp-nav-cta">Buat Akun</Link>
+          <Link href="/register" className="lp-nav-cta">Daftar Gratis</Link>
         </div>
       </nav>
 
       <section className="lp-hero">
         <div className="lp-hero-copy">
-          <div className="lp-eyebrow">
-            <i /> SECURE TRANSACTION WORKSPACE
+          <div className="lp-hero-badge">
+            <span>✓</span> Jasa Rekber Aman &amp; Terpercaya
           </div>
 
           <h1>
-            Transaksi digital,
+            Transaksi Online
             <br />
-            lebih terstruktur.
+            Lebih Aman di <em>RekberStore</em>
           </h1>
 
           <p>
-            RekberSTORE membantu buyer, seller, dan admin mengelola
-            kesepakatan transaksi dalam satu workspace dengan pencatatan
-            biaya dan status yang lebih transparan.
+            Layanan website untuk rekber terpilih. Buyer, seller, dan
+            rekber penangan mengelola kesepakatan jual beli produk
+            digital, barang, maupun jasa dalam satu workspace — biaya
+            layanan transparan, status live, dan dana transaksi dibayar
+            manual lewat QR bisnis rekber penangan.
           </p>
+
+          <div className="lp-trust">
+            <div className="lp-trust-item"><i>◈</i><span>Transaksi<br />Aman</span></div>
+            <div className="lp-trust-item"><i>◎</i><span>Penyelesaian<br />Netral</span></div>
+            <div className="lp-trust-item"><i>⌁</i><span>Proses<br />Cepat</span></div>
+          </div>
 
           <div className="lp-hero-actions">
             <Link href="/register" className="lp-button-primary">
-              Mulai menggunakan Rekber
+              Mulai Transaksi Sekarang <span aria-hidden="true">→</span>
             </Link>
-            <Link href="/login" className="lp-button-secondary">
-              Masuk akun
+            <Link href="#cara-kerja" className="lp-button-secondary">
+              Lihat Cara Kerja
             </Link>
           </div>
 
@@ -167,59 +181,48 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="lp-visual">
-          <div className="lp-visual-top">
-            <div>
-              <span className="lp-window-dots">● ● ●</span>
-              <b>REKBER WORKSPACE</b>
-            </div>
-            <span className="lp-demo-label">ATURAN TRANSAKSI</span>
-          </div>
-
-          <div className="lp-visual-heading">
-            <small>ATURAN YANG BERLAKU UNTUK SETIAP TRANSAKSI</small>
-            <h2>Buku aturan transaksi</h2>
-            <p>Ketentuan yang dicatat di platform. Bukan janji hasil, bukan data transaksi.</p>
-          </div>
-
-          <div className="lp-ledger">
-            <div className="lp-ledger-row">
-              <small>BIAYA LAYANAN WEBSITE</small>
-              <strong>2 token / transaksi</strong>
-              <p>Ditanggung oleh buyer untuk setiap transaksi.</p>
-            </div>
-
-            <div className="lp-ledger-row">
-              <small>PENAHANAN TOKEN</small>
-              <strong>Sampai seller menyetujui</strong>
-              <p>Ditolak, dibatalkan, atau kedaluwarsa: token kembali ke saldo buyer.</p>
-            </div>
-
-            <div className="lp-ledger-row attention">
-              <small>DANA TRANSAKSI</small>
-              <strong>Manual via QR bisnis</strong>
-              <p>Dibayar buyer ke QR bisnis rekber penangan. QR bukan bukti pembayaran; status berubah hanya oleh konfirmasi rekber penangan.</p>
-            </div>
-          </div>
-
-          <div className="lp-visual-footer">
-            <span>◈ TRANSACTION MANAGEMENT</span>
-            <span>REKBERSTORE</span>
-          </div>
+        <div className="lp-hero-logo-wrap">
+          <Image
+            className="lp-hero-logo"
+            src="/brand/rekberstore-logo.png"
+            alt="RekberStore"
+            width="1536"
+            height="1024"
+            priority
+          />
         </div>
       </section>
 
-      <section className="lp-strip">
-        <div><i>◈</i><span>Buyer &amp; Seller</span></div>
-        <div><i>◈</i><span>Token Wallet</span></div>
-        <div><i>◈</i><span>Admin Rekber</span></div>
-        <div><i>◈</i><span>Transaction History</span></div>
+      <section className="lp-strip" aria-label="Tiga langkah transaksi">
+        <div className="lp-strip-step">
+          <b>1.</b>
+          <div>
+            <strong>Buat kesepakatan</strong>
+            <span>Buyer dan seller menentukan barang, nominal, dan ketentuan.</span>
+          </div>
+        </div>
+        <span className="lp-strip-sep" aria-hidden="true">›</span>
+        <div className="lp-strip-step">
+          <b>2.</b>
+          <div>
+            <strong>Dana dibayar via QR bisnis</strong>
+            <span>Buyer memindai QR bisnis rekber penangan; penangan memverifikasi manual.</span>
+          </div>
+        </div>
+        <span className="lp-strip-sep" aria-hidden="true">›</span>
+        <div className="lp-strip-step">
+          <b>3.</b>
+          <div>
+            <strong>Status live sampai selesai</strong>
+            <span>Chat live dan status 8 tahap diperbarui langsung.</span>
+          </div>
+        </div>
       </section>
 
       <section className="lp-section" id="fitur">
         <div className="lp-section-heading">
           <div>
-            <span className="lp-eyebrow">PLATFORM CAPABILITIES</span>
+            <span className="lp-eyebrow">LAYANAN</span>
             <h2>Satu workspace untuk<br />mengelola transaksi.</h2>
           </div>
           <p>
@@ -361,7 +364,7 @@ export default function Home() {
 
       <footer className="lp-footer">
         <Link href="/" className="lp-brand">
-          <span className="lp-brand-mark">◈</span>
+          <span className="lp-brand-mark">R</span>
           REKBER<span>STORE</span>
         </Link>
         <p>Secure Transaction Workspace</p>
