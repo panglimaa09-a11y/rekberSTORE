@@ -148,6 +148,8 @@ export function rpcErrorToken(error: { message?: string } | null): string {
     "INVALID_REASON",
     "INVALID_RESOLUTION",
     "INVALID_DECISION",
+    "INVALID_STARS",
+    "INVALID_COMMENT",
     "NOT_TRANSACTION_BUYER",
     "NOT_TRANSACTION_SELLER",
     "NOT_TRANSACTION_PARTY",

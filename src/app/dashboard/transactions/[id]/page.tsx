@@ -8,6 +8,7 @@ import {
   advanceRekberStage,
   openRekberDispute,
   resolveRekberDispute,
+  submitRekberRating,
 } from "@/app/rekber-actions";
 import { assignRekberAdmin } from "@/app/admin-actions";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -53,6 +54,13 @@ const notices: Record<string, string> = {
   admin_assigned: "Admin penangan berhasil ditunjuk.",
   admin_already: "Admin tersebut sudah menangani transaksi ini.",
   assign_error: "Penunjukan admin gagal. Coba lagi.",
+  rating_submitted: "Penilaian terkirim. Terima kasih atas penilaian Anda.",
+  rating_done: "Anda sudah menilai transaksi ini.",
+  rating_error: "Penilaian gagal. Transaksi harus sudah selesai dan memiliki admin penangan.",
+  rating_no_admin:
+    "Transaksi ini tidak memiliki admin penangan, jadi penilaian tidak dapat dikirim.",
+  rating_unavailable:
+    "Fitur penilaian belum aktif — migrasi database belum dijalankan.",
   invalid: "Permintaan tidak valid.",
 };
 
@@ -196,6 +204,22 @@ export default async function TransactionDetail({
   } catch {
     chatRows = [];
     chatAvailable = false;
+  }
+
+  // Penilaian yang sudah dikirim penilai ini (satu per transaksi).
+  // Gagal baca (tabel belum ada) = belum ada penilaian yang bisa ditampilkan.
+  let alreadyRated = false;
+  try {
+    const { data, error } = await db
+      .from("admin_ratings")
+      .select("id")
+      .eq("transaction_id", id)
+      .eq("rater_id", user.id)
+      .maybeSingle();
+    if (error) throw error;
+    alreadyRated = !!data;
+  } catch {
+    alreadyRated = false;
   }
 
   // Nama tampilan para aktor, satu panggilan batch.
@@ -684,6 +708,79 @@ export default async function TransactionDetail({
           </div>
         </div>
       )}
+
+      {item.status === "completed" &&
+        (isBuyer || isSeller) &&
+        assignment &&
+        !alreadyRated && (
+          <section className="panel">
+            <h2>Nilai admin penangan</h2>
+            <p>
+              Transaksi selesai. Nilai kinerja{" "}
+              {displayName(assignment.admin_id)} (1–5 bintang, satu
+              penilaian per transaksi). Penilaian tampil di leaderboard
+              rekber terpilih.
+            </p>
+            <form action={submitRekberRating} className="rekber-form">
+              <input type="hidden" name="id" value={item.id} />
+              <fieldset className="rating-stars">
+                <legend>Bintang</legend>
+                {[5, 4, 3, 2, 1].map((star) => (
+                  <label key={star}>
+                    <input
+                      type="radio"
+                      name="stars"
+                      value={star}
+                      required
+                      defaultChecked={star === 5}
+                    />
+                    <span aria-hidden="true">{"★".repeat(star)}</span>
+                    <small>{star}</small>
+                  </label>
+                ))}
+              </fieldset>
+              <label>
+                Komentar (opsional, maks. 500 karakter)
+                <textarea
+                  name="comment"
+                  maxLength={500}
+                  rows={2}
+                  placeholder="Contoh: respons cepat, proses jelas."
+                />
+              </label>
+              <SubmitButton pendingLabel="Mengirim…">
+                Kirim penilaian
+              </SubmitButton>
+            </form>
+          </section>
+        )}
+
+      {item.status === "completed" &&
+        (isBuyer || isSeller) &&
+        assignment &&
+        alreadyRated && (
+          <div className="notice">
+            <div>
+              <b>Anda sudah menilai transaksi ini</b>
+              <p>Penilaian Anda tampil di leaderboard rekber terpilih.</p>
+            </div>
+          </div>
+        )}
+
+      {item.status === "completed" &&
+        (isBuyer || isSeller) &&
+        !assignment &&
+        !stageColumnMissing && (
+          <div className="notice">
+            <div>
+              <b>Transaksi ini tidak dapat dinilai</b>
+              <p>
+                Tidak ada admin penangan yang ditunjuk untuk transaksi
+                ini, jadi tidak ada yang bisa dinilai.
+              </p>
+            </div>
+          </div>
+        )}
 
       {events.length > 0 && (
         <section className="panel">

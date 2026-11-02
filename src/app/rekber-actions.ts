@@ -213,3 +213,37 @@ export async function sendTransactionMessage(
   revalidatePath(`/dashboard/transactions/${id}`);
   return { ok: true };
 }
+
+/** Nilai admin penangan transaksi selesai (1–5 bintang + komentar opsional). */
+export async function submitRekberRating(form: FormData) {
+  const id = String(form.get("id") ?? "");
+  const stars = Number(form.get("stars") ?? 0);
+  const comment = String(form.get("comment") ?? "");
+
+  const db = await supabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) redirect("/login");
+
+  const result = await db.rpc("submit_rekber_rating", {
+    p_transaction_id: id,
+    p_stars: stars,
+    p_comment: comment.trim() || null,
+  });
+  if (result.error) {
+    if (isMissingRpcError(result.error)) {
+      redirect(`/dashboard/transactions/${id}?notice=rating_unavailable`);
+    }
+    const token = rpcErrorToken(result.error);
+    if (token === "TRANSACTION_NOT_COMPLETED") {
+      redirect(`/dashboard/transactions/${id}?notice=rating_error`);
+    }
+    if (token === "NO_HANDLING_ADMIN") {
+      redirect(`/dashboard/transactions/${id}?notice=rating_no_admin`);
+    }
+    redirect(`/dashboard/transactions/${id}?notice=rating_error`);
+  }
+  if (result.data === "already_rated") {
+    redirect(`/dashboard/transactions/${id}?notice=rating_done`);
+  }
+  redirect(`/dashboard/transactions/${id}?notice=rating_submitted`);
+}

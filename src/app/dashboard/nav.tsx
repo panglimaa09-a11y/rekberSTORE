@@ -30,6 +30,7 @@ const groups: {
       { href: "/dashboard/browse", label: "⌕ Marketplace", modes: ["buyer"] },
       { href: "/dashboard/sell", label: "＋ Pasang Penawaran", modes: ["seller"] },
       { href: "/dashboard/my-listings", label: "▤ Penawaran Saya", modes: ["seller"] },
+      { href: "/leaderboard", label: "★ Papan Peringkat Rekber" },
     ],
   },
   {
