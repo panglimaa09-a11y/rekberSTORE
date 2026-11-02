@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { logout } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
+import { getActionNotificationCount } from "@/lib/notifications";
 import DashboardNav from "./nav";
 
 /**
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
 }) {
   let needsChallenge = false;
   let isStaff = false;
+  let notificationCount = 0;
   try {
     const db = await supabaseServer();
     const { data: aal, error } =
@@ -36,7 +38,13 @@ export default async function DashboardLayout({
       aal.currentLevel !== "aal2";
     const { data: { user } } = await db.auth.getUser();
     if (user) {
-      isStaff = (await getMyRoles(db, user.id)).isStaff;
+      const roles = await getMyRoles(db, user.id);
+      isStaff = roles.isStaff;
+      try {
+        notificationCount = await getActionNotificationCount(db, user.id, roles);
+      } catch {
+        notificationCount = 0;
+      }
     }
   } catch {
     needsChallenge = false;
@@ -49,6 +57,7 @@ export default async function DashboardLayout({
         <Suspense fallback={null}>
           <DashboardNav
             isStaff={isStaff}
+            notificationCount={notificationCount}
             logoutForm={
               <form action={logout}>
                 <button className="logout" type="submit">

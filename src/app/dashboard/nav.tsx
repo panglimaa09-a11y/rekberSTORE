@@ -64,9 +64,11 @@ function isSelected(pathname: string, href: string) {
 export default function DashboardNav({
   logoutForm,
   isStaff,
+  notificationCount,
 }: {
   logoutForm: ReactNode;
   isStaff: boolean;
+  notificationCount: number;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -120,6 +122,18 @@ export default function DashboardNav({
         <div onClick={close}>
           <ModeSwitcher />
         </div>
+        <Link
+          href="/dashboard/notifications"
+          onClick={close}
+          className={
+            "notif-bell" + (pathname.startsWith("/dashboard/notifications") ? " selected" : "")
+          }
+        >
+          Notifikasi
+          {notificationCount > 0 && (
+            <b className="notif-count">{notificationCount}</b>
+          )}
+        </Link>
         {visibleGroups.map((group) => {
           const links = group.links.filter(
             (link) =>
