@@ -42,7 +42,11 @@ export async function middleware(req: NextRequest) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  if (req.nextUrl.pathname.startsWith("/dashboard") && !user) {
+  if (
+    (req.nextUrl.pathname.startsWith("/dashboard") ||
+      req.nextUrl.pathname.startsWith("/admin")) &&
+    !user
+  ) {
     const target = req.nextUrl.clone();
     target.pathname = "/login";
     return NextResponse.redirect(target);
@@ -52,5 +56,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"]
+  matcher: ["/dashboard/:path*", "/admin/:path*"]
 };

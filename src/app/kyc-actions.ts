@@ -77,7 +77,7 @@ export async function reviewUserKyc(form: FormData) {
 
   const roles = await getMyRoles(db, user.id);
   if (!roles.isStaff) {
-    redirect("/dashboard/admin?error=forbidden");
+    redirect("/admin/kyc-pengguna?error=forbidden");
   }
 
   const result = await db.rpc("review_user_kyc", {
@@ -87,18 +87,18 @@ export async function reviewUserKyc(form: FormData) {
   });
   if (result.error) {
     if (isMissingRpcError(result.error)) {
-      redirect("/dashboard/admin?error=kyc_unavailable");
+      redirect("/admin/kyc-pengguna?error=kyc_unavailable");
     }
     const token = rpcErrorToken(result.error);
     if (token === "NOT_PENDING") {
-      redirect("/dashboard/admin?notice=kyc_not_pending");
+      redirect("/admin/kyc-pengguna?notice=kyc_not_pending");
     }
     if (token === "INVALID_NOTE") {
-      redirect("/dashboard/admin?error=kyc_invalid_note");
+      redirect("/admin/kyc-pengguna?error=kyc_invalid_note");
     }
-    redirect("/dashboard/admin?error=kyc_review_error");
+    redirect("/admin/kyc-pengguna?error=kyc_review_error");
   }
 
-  revalidatePath("/dashboard/admin");
-  redirect("/dashboard/admin?notice=kyc_reviewed");
+  revalidatePath("/admin/kyc-pengguna");
+  redirect("/admin/kyc-pengguna?notice=kyc_reviewed");
 }

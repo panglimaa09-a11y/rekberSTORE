@@ -7,8 +7,20 @@ import { isMissingRpcError, rpcErrorToken } from "@/lib/rekber-stages";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
-function adminUrl(notice: string) {
-  return `/dashboard/admin?notice=${notice}`;
+function daftarAdminUrl(notice: string) {
+  return `/admin/daftar-admin?notice=${notice}`;
+}
+
+function tinjauanQrUrl(notice: string) {
+  return `/admin/tinjauan-qr?notice=${notice}`;
+}
+
+function tinjauanKycUrl(notice: string) {
+  return `/admin/tinjauan-kyc?notice=${notice}`;
+}
+
+function moderasiUrl(notice: string) {
+  return `/admin/moderasi?notice=${notice}`;
 }
 
 function detailUrl(id: string, notice: string) {
@@ -31,40 +43,40 @@ export async function appointRekberAdmin(form: FormData) {
   const email = String(form.get("email") || "").trim().toLowerCase();
 
   if (!email.includes("@") || !email.includes(".") || email.length > 254) {
-    redirect(adminUrl("appoint_invalid"));
+    redirect(daftarAdminUrl("appoint_invalid"));
   }
 
   const db = await requireUser();
   const { error } = await db.rpc("appoint_rekber_admin", { p_email: email });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(adminUrl("stage_unavailable"));
+    if (isMissingRpcError(error)) redirect(daftarAdminUrl("stage_unavailable"));
     const token = rpcErrorToken(error);
-    if (token === "USER_NOT_FOUND") redirect(adminUrl("appoint_not_found"));
-    redirect(adminUrl("appoint_error"));
+    if (token === "USER_NOT_FOUND") redirect(daftarAdminUrl("appoint_not_found"));
+    redirect(daftarAdminUrl("appoint_error"));
   }
 
-  revalidatePath("/dashboard/admin");
-  redirect(adminUrl("appointed"));
+  revalidatePath("/admin/daftar-admin");
+  redirect(daftarAdminUrl("appointed"));
 }
 
 export async function revokeRekberAdmin(form: FormData) {
   const userId = String(form.get("user_id") || "").trim();
 
   if (!UUID_RE.test(userId)) {
-    redirect(adminUrl("invalid"));
+    redirect(daftarAdminUrl("invalid"));
   }
 
   const db = await requireUser();
   const { error } = await db.rpc("revoke_rekber_admin", { p_user_id: userId });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(adminUrl("stage_unavailable"));
-    redirect(adminUrl("revoke_error"));
+    if (isMissingRpcError(error)) redirect(daftarAdminUrl("stage_unavailable"));
+    redirect(daftarAdminUrl("revoke_error"));
   }
 
-  revalidatePath("/dashboard/admin");
-  redirect(adminUrl("revoked"));
+  revalidatePath("/admin/daftar-admin");
+  redirect(daftarAdminUrl("revoked"));
 }
 
 /**
@@ -113,7 +125,7 @@ export async function reviewQrProfile(form: FormData) {
     !["approved", "rejected"].includes(decision) ||
     note.length > 500
   ) {
-    redirect(adminUrl("review_invalid"));
+    redirect(tinjauanQrUrl("review_invalid"));
   }
 
   const db = await requireUser();
@@ -124,12 +136,12 @@ export async function reviewQrProfile(form: FormData) {
   });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(adminUrl("stage_unavailable"));
-    redirect(adminUrl("review_error"));
+    if (isMissingRpcError(error)) redirect(tinjauanQrUrl("stage_unavailable"));
+    redirect(tinjauanQrUrl("review_error"));
   }
 
-  revalidatePath("/dashboard/admin");
-  redirect(adminUrl("qr_reviewed"));
+  revalidatePath("/admin/tinjauan-qr");
+  redirect(tinjauanQrUrl("qr_reviewed"));
 }
 
 /** Tinjau pengajuan KYC oleh super_admin. */
@@ -143,7 +155,7 @@ export async function reviewKycSubmission(form: FormData) {
     !["approved", "rejected", "suspended"].includes(decision) ||
     note.length > 500
   ) {
-    redirect(adminUrl("review_invalid"));
+    redirect(tinjauanKycUrl("review_invalid"));
   }
 
   const db = await requireUser();
@@ -154,12 +166,12 @@ export async function reviewKycSubmission(form: FormData) {
   });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(adminUrl("stage_unavailable"));
-    redirect(adminUrl("review_error"));
+    if (isMissingRpcError(error)) redirect(tinjauanKycUrl("stage_unavailable"));
+    redirect(tinjauanKycUrl("review_error"));
   }
 
-  revalidatePath("/dashboard/admin");
-  redirect(adminUrl("kyc_reviewed"));
+  revalidatePath("/admin/tinjauan-kyc");
+  redirect(tinjauanKycUrl("kyc_reviewed"));
 }
 
 /**
@@ -181,7 +193,7 @@ export async function upsertQrProfile(form: FormData) {
     !qrPath ||
     qrPath.includes("..")
   ) {
-    redirect("/dashboard/admin/profil-bisnis?error=invalid");
+    redirect("/admin/profil-bisnis?error=invalid");
   }
 
   const db = await requireUser();
@@ -194,13 +206,13 @@ export async function upsertQrProfile(form: FormData) {
 
   if (error) {
     if (isMissingRpcError(error)) {
-      redirect("/dashboard/admin/profil-bisnis?error=unavailable");
+      redirect("/admin/profil-bisnis?error=unavailable");
     }
-    redirect("/dashboard/admin/profil-bisnis?error=save");
+    redirect("/admin/profil-bisnis?error=save");
   }
 
-  revalidatePath("/dashboard/admin/profil-bisnis");
-  redirect("/dashboard/admin/profil-bisnis?notice=qr_submitted");
+  revalidatePath("/admin/profil-bisnis");
+  redirect("/admin/profil-bisnis?notice=qr_submitted");
 }
 
 /** Simpan/ajukan dokumen KYC oleh admin itu sendiri. */
@@ -223,7 +235,7 @@ export async function upsertKycSubmission(form: FormData) {
     !selfiePath ||
     selfiePath.includes("..")
   ) {
-    redirect("/dashboard/admin/profil-bisnis?error=invalid");
+    redirect("/admin/profil-bisnis?error=invalid");
   }
 
   const db = await requireUser();
@@ -237,13 +249,13 @@ export async function upsertKycSubmission(form: FormData) {
 
   if (error) {
     if (isMissingRpcError(error)) {
-      redirect("/dashboard/admin/profil-bisnis?error=unavailable");
+      redirect("/admin/profil-bisnis?error=unavailable");
     }
-    redirect("/dashboard/admin/profil-bisnis?error=save");
+    redirect("/admin/profil-bisnis?error=save");
   }
 
-  revalidatePath("/dashboard/admin/profil-bisnis");
-  redirect("/dashboard/admin/profil-bisnis?notice=kyc_submitted");
+  revalidatePath("/admin/profil-bisnis");
+  redirect("/admin/profil-bisnis?notice=kyc_submitted");
 }
 
 /** Jeda/aktifkan listing oleh staf. Tanpa hapus (tidak ada policy DELETE). */
@@ -252,7 +264,7 @@ export async function setListingStatusAdmin(form: FormData) {
   const status = String(form.get("status") || "");
 
   if (!UUID_RE.test(listingId) || !["active", "paused"].includes(status)) {
-    redirect(adminUrl("invalid"));
+    redirect(moderasiUrl("invalid"));
   }
 
   const db = await requireUser();
@@ -262,12 +274,12 @@ export async function setListingStatusAdmin(form: FormData) {
   });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(adminUrl("stage_unavailable"));
-    redirect(adminUrl("listing_error"));
+    if (isMissingRpcError(error)) redirect(moderasiUrl("stage_unavailable"));
+    redirect(moderasiUrl("listing_error"));
   }
 
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin/moderasi");
   revalidatePath("/dashboard/browse");
   revalidatePath("/dashboard/my-listings");
-  redirect(adminUrl("listing_updated"));
+  redirect(moderasiUrl("listing_updated"));
 }

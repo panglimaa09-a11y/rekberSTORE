@@ -103,13 +103,13 @@ const groups: { heading: string; links: HubLink[] }[] = [
 
 const adminLinks: HubLink[] = [
   {
-    href: "/dashboard/admin",
+    href: "/admin",
     icon: "▨",
     label: "Panel Admin",
     desc: "Sengketa, pengawasan, penunjukan admin",
   },
   {
-    href: "/dashboard/admin/profil-bisnis",
+    href: "/admin/profil-bisnis",
     icon: "▣",
     label: "Profil Bisnis",
     desc: "QR bisnis dan dokumen admin",

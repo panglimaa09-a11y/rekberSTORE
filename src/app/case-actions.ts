@@ -55,7 +55,7 @@ export async function openRekberCase(form: FormData) {
   }
 
   revalidatePath(`/dashboard/transactions/${id}`);
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin/kasus");
   redirect(`/dashboard/transactions/${id}?notice=case_opened`);
 }
 
@@ -71,7 +71,7 @@ export async function updateRekberCaseStatus(form: FormData) {
   const resolution = String(form.get("resolution") ?? "").trim();
 
   if (!UUID_RE.test(caseId)) {
-    redirect("/dashboard/admin?error=invalid");
+    redirect("/admin/kasus?error=invalid");
   }
 
   const db = await supabaseServer();
@@ -80,7 +80,7 @@ export async function updateRekberCaseStatus(form: FormData) {
 
   const roles = await getMyRoles(db, user.id);
   if (!roles.isStaff) {
-    redirect("/dashboard/admin?error=forbidden");
+    redirect("/admin/kasus?error=forbidden");
   }
 
   const result = await db.rpc("update_rekber_case_status", {
@@ -91,27 +91,27 @@ export async function updateRekberCaseStatus(form: FormData) {
   if (result.error) {
     if (isMissingRpcError(result.error)) {
       redirect(
-        `/dashboard/admin/kasus/${caseId}?notice=case_unavailable`
+        `/admin/kasus/${caseId}?notice=case_unavailable`
       );
     }
     const token = rpcErrorToken(result.error);
     if (token === "NOT_CASE_HANDLER") {
-      redirect(`/dashboard/admin/kasus/${caseId}?notice=case_forbidden`);
+      redirect(`/admin/kasus/${caseId}?notice=case_forbidden`);
     }
     if (token === "CASE_CLOSED") {
-      redirect(`/dashboard/admin/kasus/${caseId}?notice=case_closed`);
+      redirect(`/admin/kasus/${caseId}?notice=case_closed`);
     }
     if (
       token === "INVALID_TRANSITION" ||
       token === "INVALID_STATUS" ||
       token === "INVALID_RESOLUTION"
     ) {
-      redirect(`/dashboard/admin/kasus/${caseId}?notice=case_invalid`);
+      redirect(`/admin/kasus/${caseId}?notice=case_invalid`);
     }
-    redirect(`/dashboard/admin/kasus/${caseId}?notice=case_error`);
+    redirect(`/admin/kasus/${caseId}?notice=case_error`);
   }
 
-  revalidatePath(`/dashboard/admin/kasus/${caseId}`);
-  revalidatePath("/dashboard/admin");
-  redirect(`/dashboard/admin/kasus/${caseId}?notice=case_updated`);
+  revalidatePath(`/admin/kasus/${caseId}`);
+  revalidatePath("/admin/kasus");
+  redirect(`/admin/kasus/${caseId}?notice=case_updated`);
 }

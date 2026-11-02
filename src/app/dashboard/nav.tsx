@@ -90,8 +90,8 @@ export default function DashboardNav({
         {
           heading: "ADMIN",
           links: [
-            { href: "/dashboard/admin", label: "⚖ Panel Admin" },
-            { href: "/dashboard/admin/profil-bisnis", label: "▣ Profil Bisnis" },
+            { href: "/admin", label: "▨ Panel Admin" },
+            { href: "/admin/profil-bisnis", label: "▣ Profil Bisnis" },
           ],
         },
       ]
