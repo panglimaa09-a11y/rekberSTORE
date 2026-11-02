@@ -43,6 +43,12 @@ const groups: { heading: string; links: HubLink[] }[] = [
         modes: ["buyer"],
       },
       {
+        href: "/dashboard/pesan",
+        icon: "◎",
+        label: "Pesan",
+        desc: "Chat transaksi dengan buyer, seller, dan penangan",
+      },
+      {
         href: "/dashboard/sell",
         icon: "＋",
         label: "Pasang Penawaran",

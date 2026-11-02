@@ -29,6 +29,7 @@ const groups: {
     heading: "LAYANAN",
     links: [
       { href: "/dashboard/browse", label: "⌕ Marketplace", modes: ["buyer"] },
+      { href: "/dashboard/pesan", label: "Pesan" },
       { href: "/dashboard/sell", label: "＋ Pasang Penawaran", modes: ["seller"] },
       { href: "/dashboard/my-listings", label: "▤ Penawaran Saya", modes: ["seller"] },
       { href: "/leaderboard", label: "★ Papan Peringkat Rekber" },
