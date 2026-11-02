@@ -683,3 +683,30 @@
 @media(max-width:600px){
   .chat-list li{max-width:94%}
 }
+
+/* Panel admin + profil bisnis */
+.admin-item{padding:16px 0;border-bottom:1px solid var(--line)}
+.admin-item:last-child{border-bottom:0}
+.admin-item small{display:block;color:var(--muted);font-size:10px;margin:5px 0}
+.admin-item p{font-size:12px;line-height:1.7;color:var(--muted);margin:6px 0}
+.admin-item p a{color:var(--green)}
+.admin-item .dispute-form{margin-top:10px}
+.qr-preview{display:block;width:150px;height:150px;margin:12px 0;background:#fff;border-radius:10px;padding:8px;object-fit:contain}
+.admin-inline-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:14px}
+.admin-inline-form label{display:grid;gap:7px;font-size:11px;color:var(--muted);flex:1;min-width:220px}
+.admin-inline-form input,.admin-inline-form select,.admin-profile-form input,.admin-profile-form select{padding:12px;border:1px solid #2b4144;background:#091216;border-radius:8px;color:white;font:inherit;font-size:12px}
+.admin-subhead{margin-top:26px}
+.admin-profile-form{display:grid;gap:16px;margin-top:16px;max-width:640px}
+.admin-profile-form label{display:grid;gap:7px;font-size:11px;color:var(--muted)}
+.doc-upload{display:grid;gap:8px;padding:14px;border:1px dashed #314744;border-radius:10px;background:#0b1518}
+.doc-upload-label{font-size:11px;font-weight:700}
+.doc-upload input[type="file"]{font-size:11px;color:var(--muted)}
+.doc-upload .btn{justify-self:start;padding:9px 13px;font-size:11px}
+.doc-upload small{font-size:11px;line-height:1.6}
+.doc-upload-existing{color:var(--muted)}
+.doc-upload-ok{color:#9be8c7}
+.doc-upload-error{color:#ffc0b9}
+.sql-snippet{display:block;overflow-x:auto;white-space:pre;background:#091216;border:1px solid #2b4144;border-radius:8px;padding:14px;font-size:11px;line-height:1.7;color:#e8c980;margin:14px 0}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 16px}
+.filter-row a{padding:7px 11px;border:1px solid var(--line);border-radius:20px;color:#9aaba5;font-size:11px;background:#0b1518}
+.filter-row a.filter-active{background:#143027;color:#a7f3d0;border-color:#2d5748}

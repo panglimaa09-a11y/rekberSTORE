@@ -63,8 +63,10 @@ function isSelected(pathname: string, href: string) {
  */
 export default function DashboardNav({
   logoutForm,
+  isStaff,
 }: {
   logoutForm: ReactNode;
+  isStaff: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -76,6 +78,19 @@ export default function DashboardNav({
     if (mode === "all" || !href.startsWith("/dashboard")) return href;
     return `${href}?mode=${mode}`;
   };
+
+  const visibleGroups = isStaff
+    ? [
+        ...groups,
+        {
+          heading: "ADMIN",
+          links: [
+            { href: "/dashboard/admin", label: "⚖ Panel Admin" },
+            { href: "/dashboard/admin/profil-bisnis", label: "▣ Profil Bisnis" },
+          ],
+        },
+      ]
+    : groups;
 
   return (
     <>
@@ -105,7 +120,7 @@ export default function DashboardNav({
         <div onClick={close}>
           <ModeSwitcher />
         </div>
-        {groups.map((group) => {
+        {visibleGroups.map((group) => {
           const links = group.links.filter(
             (link) =>
               !link.modes ||

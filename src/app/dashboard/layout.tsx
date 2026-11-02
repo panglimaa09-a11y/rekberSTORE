@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { logout } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getMyRoles } from "@/lib/supabase/roles";
 import DashboardNav from "./nav";
 
 /**
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   let needsChallenge = false;
+  let isStaff = false;
   try {
     const db = await supabaseServer();
     const { data: aal, error } =
@@ -32,6 +34,10 @@ export default async function DashboardLayout({
       !!aal &&
       aal.nextLevel === "aal2" &&
       aal.currentLevel !== "aal2";
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      isStaff = (await getMyRoles(db, user.id)).isStaff;
+    }
   } catch {
     needsChallenge = false;
   }
@@ -42,6 +48,7 @@ export default async function DashboardLayout({
       <aside className="side">
         <Suspense fallback={null}>
           <DashboardNav
+            isStaff={isStaff}
             logoutForm={
               <form action={logout}>
                 <button className="logout" type="submit">

@@ -9,6 +9,7 @@ import {
   openRekberDispute,
   resolveRekberDispute,
 } from "@/app/rekber-actions";
+import { assignRekberAdmin } from "@/app/admin-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import SubmitButton from "@/components/SubmitButton";
 import ChatRoom, { type ChatMessage } from "@/components/ChatRoom";
@@ -49,6 +50,9 @@ const notices: Record<string, string> = {
     "Sengketa diputus: pengembalian dana ditandai. Pengembalian uang ditangani manual oleh admin.",
   dispute_rejected:
     "Sengketa ditolak. Transaksi dilanjutkan dari tahap berjalan.",
+  admin_assigned: "Admin penangan berhasil ditunjuk.",
+  admin_already: "Admin tersebut sudah menangani transaksi ini.",
+  assign_error: "Penunjukan admin gagal. Coba lagi.",
   invalid: "Permintaan tidak valid.",
 };
 
@@ -325,6 +329,27 @@ export default async function TransactionDetail({
     createdAt: row.created_at,
   }));
 
+  // Daftar admin untuk penunjukan oleh super admin.
+  let staffList: {
+    user_id: string;
+    display_name: string;
+    email: string;
+  }[] = [];
+  if (isSuperAdmin) {
+    try {
+      const { data, error } = await db.rpc("list_rekber_admins");
+      if (!error && Array.isArray(data)) {
+        staffList = data.map((row) => ({
+          user_id: row.user_id,
+          display_name: row.display_name || "",
+          email: row.email || "",
+        }));
+      }
+    } catch {
+      staffList = [];
+    }
+  }
+
   return (
     <section className="dashmain">
       <Link href="/dashboard/transactions">Kembali ke daftar transaksi</Link>
@@ -391,6 +416,43 @@ export default async function TransactionDetail({
         </div>
         {item.description && <p>{item.description}</p>}
       </section>
+
+      {isSuperAdmin && !closed && (
+        <section className="panel">
+          <h2>Tunjuk admin penangan</h2>
+          <p>
+            Hanya super admin yang menunjuk. Admin yang ditunjuk adalah
+            rekber terpilih yang terdaftar; tidak ada penunjukan diri
+            sendiri.
+          </p>
+          {staffList.length === 0 ? (
+            <p>
+              Daftar admin belum dapat dibaca. Periksa migrasi database
+              atau daftarkan admin terpilih lewat panel admin.
+            </p>
+          ) : (
+            <form action={assignRekberAdmin} className="admin-inline-form">
+              <input type="hidden" name="transaction_id" value={item.id} />
+              <label>
+                Admin penangan
+                <select name="admin_id" required defaultValue={assignment?.admin_id ?? ""}>
+                  <option value="" disabled>
+                    Pilih admin terpilih
+                  </option>
+                  {staffList.map((staff) => (
+                    <option key={staff.user_id} value={staff.user_id}>
+                      {staff.display_name || staff.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <SubmitButton className="btn" pendingLabel="Menunjuk…">
+                Tunjuk admin
+              </SubmitButton>
+            </form>
+          )}
+        </section>
+      )}
 
       <section className="panel">
         <h2>Tahapan transaksi</h2>
