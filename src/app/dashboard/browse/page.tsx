@@ -91,7 +91,7 @@ export default async function Browse({searchParams}: {
               <div className="shop-body">
                 <small>{x.category}</small>
                 <h3><Link href={"/dashboard/items/" + x.id}>{x.title}</Link></h3>
-                <span className="shop-seller">Penjual: {displayNameFor(nameMap, user.id, x.seller_id)}</span>
+                <Link className="shop-seller shop-seller-link" href={"/dashboard/toko/" + x.seller_id}>Penjual: {displayNameFor(nameMap, user.id, x.seller_id)}</Link>
                 <strong className="shop-price">{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(x.price)}</strong>
                 {isOwn ? (
                   <span className="shop-buy-note">Listing milik Anda</span>

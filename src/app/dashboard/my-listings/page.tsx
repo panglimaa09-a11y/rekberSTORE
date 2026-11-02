@@ -36,6 +36,7 @@ export default async function MyListings({searchParams}: {
 
   return <section className="dashmain">
     <h1>Listing Saya</h1>
+    <p><Link href={"/dashboard/toko/" + user.id}>Lihat Toko Saya</Link></p>
     {p.success === "1" && <div className="success rekber-message">Listing berhasil diterbitkan.</div>}
     {p.notice && noticeCopy[p.notice] && <div className="success rekber-message">{noticeCopy[p.notice]}</div>}
     {p.error && errorCopy[p.error] && <div className="alert rekber-message">{errorCopy[p.error]}</div>}

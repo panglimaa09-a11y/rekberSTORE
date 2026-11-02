@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requestTransaction } from "@/app/marketplace-actions";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -50,7 +51,7 @@ export default async function Item({ params }: { params: Promise<{ id: string }>
         <small>{item.category}</small>
         <h1>{item.title}</h1>
         <p className="shop-seller">
-          Dijual oleh {displayNameFor(nameMap, user.id, item.seller_id)}
+          Dijual oleh <Link className="shop-seller-link" href={"/dashboard/toko/" + item.seller_id}>{displayNameFor(nameMap, user.id, item.seller_id)}</Link>
           {isStaffSeller ? " · Rekber Terpilih" : ""}
         </p>
         <h2>
