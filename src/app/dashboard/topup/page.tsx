@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { logout } from "@/app/actions";
 import { createTokenTopupOrder } from "@/app/token-actions";
+import SubmitButton from "@/components/SubmitButton";
 
 const packages = [
   { tokens: 1, price: 5000, name: "Starter", detail: "Paket awal" },
@@ -76,29 +76,7 @@ export default async function TokenTopup({
   ]);
 
   return (
-    <main className="dash">
-      <aside className="side">
-        <Link className="brand" href="/">◈ Rekber<span>STORE</span></Link>
-
-        <small>WORKSPACE</small>
-        <Link href="/dashboard">▦ Dashboard</Link>
-        <Link href="/dashboard/transactions">⇄ Transaksi Saya</Link>
-        <Link className="selected" href="/dashboard/topup">◈ Top Up Token</Link>
-
-        <small>LAYANAN</small>
-        <Link href="/dashboard/browse">⌕ Marketplace</Link>
-        <Link href="/dashboard/sell">＋ Pasang Penawaran</Link>
-        <Link href="/dashboard/my-listings">▤ Penawaran Saya</Link>
-
-        <small>AKUN</small>
-        <Link href="/">Pusat Informasi</Link>
-
-        <form action={logout}>
-          <button className="logout" type="submit">Keluar dari akun</button>
-        </form>
-      </aside>
-
-      <section className="dashmain">
+    <section className="dashmain">
         <header>
           <div>
             <small className="eyebrow">REKBERSTORE TOKEN WALLET</small>
@@ -170,13 +148,14 @@ export default async function TokenTopup({
                     name="package_tokens"
                     value={item.tokens}
                   />
-                  <button
+                  <SubmitButton
                     type="submit"
                     className="token-order-button"
                     disabled={!!walletError || !wallet}
+                    pendingLabel="Membuat pesanan…"
                   >
                     Buat Pesanan
-                  </button>
+                  </SubmitButton>
                 </form>
               </article>
             ))}
@@ -279,6 +258,5 @@ export default async function TokenTopup({
           </div>
         </div>
       </section>
-    </main>
   );
 }

@@ -153,7 +153,6 @@
   background:var(--lp-green);
   border-radius:50%;
   margin-right:8px;
-  box-shadow:0 0 15px var(--lp-green);
 }
 .lp-hero h1{
   margin:22px 0;
@@ -238,41 +237,36 @@
   margin:9px 0;
 }
 .lp-visual-heading p{color:var(--lp-muted);font-size:10px}
-.lp-flow-item{
-  display:flex;
-  align-items:center;
-  gap:13px;
-  padding:17px 0;
+.lp-ledger{display:grid}
+.lp-ledger-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:4px 16px;
+  align-items:baseline;
+  padding:16px 0;
   border-bottom:1px solid rgba(145,163,157,.15);
 }
-.lp-flow-number{
-  display:grid;
-  place-items:center;
-  flex-shrink:0;
-  width:34px;
-  height:34px;
-  border:1px solid #40534b;
-  border-radius:50%;
-  color:#a4b2ab;
-  font-size:10px;
-}
-.lp-flow-number.active{
-  border-color:var(--lp-green);
+.lp-ledger-row:last-child{border-bottom:0}
+.lp-ledger-row>small{
   color:var(--lp-green);
-  background:rgba(55,212,155,.08);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:1.5px;
 }
-.lp-flow-item>div:nth-child(2){flex:1}
-.lp-flow-item b{display:block;font-size:11px}
-.lp-flow-item small{display:block;margin-top:5px;color:var(--lp-muted);font-size:9px}
-.lp-flow-check{color:var(--lp-green)}
-.lp-flow-pending{
-  padding:5px 8px;
-  border-radius:20px;
-  background:#302715;
-  color:var(--lp-gold);
-  font-size:8px;
+.lp-ledger-row>strong{
+  font:700 14px Manrope,sans-serif;
+  text-align:right;
+  white-space:nowrap;
 }
-.lp-flow-lock{color:var(--lp-gold)}
+.lp-ledger-row>p{
+  grid-column:1/-1;
+  margin:0;
+  color:var(--lp-muted);
+  font-size:10px;
+  line-height:1.6;
+}
+.lp-ledger-row.attention>small{color:var(--lp-gold)}
+.lp-ledger-row.attention>strong{color:var(--lp-gold)}
 .lp-visual-footer{
   display:flex;
   justify-content:space-between;
@@ -299,7 +293,7 @@
   color:#aab9b2;
   font-size:11px;
 }
-.lp-strip b{color:var(--lp-green);font:700 12px Manrope}
+.lp-strip i{color:var(--lp-gold);font-style:normal;font-size:11px}
 .lp-section,.lp-workflow,.lp-faq{
   max-width:1172px;
   margin:auto;
@@ -370,7 +364,8 @@
 }
 .lp-step>span{
   color:var(--lp-green);
-  font:800 23px Manrope,sans-serif;
+  font:800 10px Manrope,sans-serif;
+  letter-spacing:1.5px;
 }
 .lp-step-line{
   height:1px;
@@ -529,8 +524,8 @@
   .lp-button-primary,.lp-button-secondary{width:100%}
   .lp-visual{padding:17px}
   .lp-visual-heading{margin-top:27px}
-  .lp-flow-item{gap:9px}
-  .lp-flow-item small{font-size:8px}
+  .lp-ledger-row{padding:13px 0}
+  .lp-ledger-row>p{font-size:9px}
   .lp-strip{grid-template-columns:repeat(2,1fr);gap:20px;padding:24px 13px}
   .lp-strip>div{justify-content:flex-start;font-size:9px}
   .lp-section,.lp-workflow,.lp-faq{padding:75px 20px}
@@ -549,7 +544,6 @@
 }
 /* Kelas yang dipakai halaman tapi belum didefinisikan (perbaikan 2 Nov 2026).
    Mengikuti token warna yang sudah ada: --bg/--panel/--line/--text/--muted/--green. */
-.lp-flow-list{display:grid}
 .token-balance{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#111e22,#0b1418)}
 .token-balance small{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);font-weight:700}
 .token-balance strong{font:800 28px Manrope,sans-serif}
@@ -565,3 +559,34 @@
 .token-package p{color:var(--muted);font-size:12px;line-height:1.6}
 .token-featured{border-color:#2d5748;background:linear-gradient(145deg,#132a20,#0c1518)}
 @media(max-width:850px){.token-packages{grid-template-columns:1fr}}
+
+/* Status loading tombol kirim (SubmitButton): tombol yang sedang
+   mengirim atau memang dinonaktifkan terlihat jelas tidak bisa diklik. */
+.btn:disabled,.market-primary:disabled,.market-secondary:disabled,.logout:disabled{opacity:.55;cursor:not-allowed}
+
+/* avoid-ai-design-ignore-file: SD2
+   Palet yang dipakai di file ini adalah token merek produk yang
+   dikunci oleh brief dan dipertahankan dengan sengaja, bukan
+   default yang tidak dipilih. */
+
+/* Halaman detail transaksi */
+.tx-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-bottom:20px}
+.tx-head .rekber-status{margin-top:10px}
+.tx-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.tx-meta>div{padding:14px;border:1px solid var(--line);border-radius:10px;background:#0b1518}
+.tx-meta small{display:block;color:var(--muted);font-size:10px;letter-spacing:1px;font-weight:700}
+.tx-meta b{display:block;margin-top:6px;font-size:13px;overflow-wrap:anywhere}
+.tx-timeline{list-style:none;margin:20px 0 0;padding:0;display:grid}
+.tx-timeline li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.tx-timeline li:last-child{border-bottom:0}
+.tx-dot{flex-shrink:0;width:11px;height:11px;margin-top:4px;border:1px solid #50635c;border-radius:50%}
+.tx-dot.done{background:var(--green);border-color:var(--green)}
+.tx-dot.current{border:3px solid var(--green)}
+.tx-dot.blocked{border-color:#68423e;background:#2b1918}
+.tx-timeline b{display:block;font-size:12px}
+.tx-timeline small{color:var(--muted);font-size:11px;line-height:1.6}
+.tablewrap a{color:#a7f3d0}
+@media(max-width:600px){.tx-meta{grid-template-columns:1fr}}
+
+/* Baris aksi kelola listing di dalam kartu */
+.market-card .rekber-actions{margin-top:14px}

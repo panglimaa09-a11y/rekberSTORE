@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { logout } from "@/app/actions";
 
 const statusLabels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan",
@@ -45,24 +44,7 @@ export default async function Dashboard() {
   const disputed = rows.filter(x => x.status === "disputed").length;
 
   return (
-    <main className="dash">
-      <aside className="side">
-        <Link className="brand" href="/">◈ Rekber<span>STORE</span></Link>
-        <small>WORKSPACE</small>
-        <Link className="selected" href="/dashboard">▦ Dashboard</Link>
-        <Link href="/dashboard/transactions">⇄ Transaksi Saya</Link>
-        <small>LAYANAN</small>
-        <Link href="/dashboard/browse">⌕ Marketplace</Link>
-        <Link href="/dashboard/sell">＋ Pasang Penawaran</Link>
-        <Link href="/dashboard/my-listings">▤ Penawaran Saya</Link>
-        <small>AKUN</small>
-        <Link href="/">Pusat Informasi</Link>
-        <form action={logout}>
-          <button className="logout" type="submit">Keluar dari akun</button>
-        </form>
-      </aside>
-
-      <section className="dashmain">
+    <section className="dashmain">
         <header>
           <div>
             <small className="eyebrow">SECURE TRANSACTION WORKSPACE</small>
@@ -101,7 +83,7 @@ export default async function Dashboard() {
               <h2>Aktivitas transaksi terbaru</h2>
               <p>Transaksi yang melibatkan akun {user.email ?? "Anda"}.</p>
             </div>
-            <Link href="/dashboard/transactions">Lihat semua →</Link>
+            <Link href="/dashboard/transactions">Lihat semua</Link>
           </div>
 
           {error && (
@@ -136,7 +118,11 @@ export default async function Dashboard() {
                   {rows.slice(0, 6).map(item => (
                     <tr key={item.id}>
                       <td>
-                        <b>{item.title}</b>
+                        <b>
+                          <Link href={"/dashboard/transactions/" + item.id}>
+                            {item.title}
+                          </Link>
+                        </b>
                         <small>{item.buyer_id === user.id ? "Sebagai pembeli" : "Sebagai penjual"}</small>
                       </td>
                       <td>{money(item.amount)}</td>
@@ -166,6 +152,5 @@ export default async function Dashboard() {
           </div>
         </div>
       </section>
-    </main>
   );
 }

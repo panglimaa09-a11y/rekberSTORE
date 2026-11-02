@@ -161,3 +161,84 @@ export async function cancelPendingTransaction(form: FormData) {
 
   redirect("/dashboard/transactions?notice=cancelled");
 }
+
+export async function updateListing(form: FormData) {
+  const id = String(form.get("listing_id") || "").trim();
+  const title = String(form.get("title") || "").trim();
+  const category = String(form.get("category") || "");
+  const description = String(form.get("description") || "").trim();
+  const price = Number(form.get("price"));
+
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    redirect("/dashboard/my-listings?error=invalid");
+  }
+
+  if (
+    title.length < 5 || title.length > 100 ||
+    !categories.includes(category) ||
+    description.length < 20 || description.length > 3000 ||
+    !Number.isSafeInteger(price) || price < 1000
+  ) {
+    redirect(`/dashboard/my-listings/${id}/edit?error=invalid`);
+  }
+
+  const db = await supabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data, error } = await db.from("marketplace_listings")
+    .update({ title, category, description, price })
+    .eq("id", id)
+    .eq("seller_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    redirect(`/dashboard/my-listings/${id}/edit?error=database`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/browse");
+  revalidatePath("/dashboard/my-listings");
+
+  redirect("/dashboard/my-listings?notice=updated");
+}
+
+export async function setListingStatus(form: FormData) {
+  const id = String(form.get("listing_id") || "").trim();
+  const status = String(form.get("status") || "");
+
+  if (
+    !/^[0-9a-f-]{36}$/i.test(id) ||
+    !["active", "paused"].includes(status)
+  ) {
+    redirect("/dashboard/my-listings?error=invalid");
+  }
+
+  const db = await supabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data, error } = await db.from("marketplace_listings")
+    .update({ status })
+    .eq("id", id)
+    .eq("seller_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    redirect("/dashboard/my-listings?error=database");
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/browse");
+  revalidatePath("/dashboard/my-listings");
+
+  redirect(
+    status === "paused"
+      ? "/dashboard/my-listings?notice=paused"
+      : "/dashboard/my-listings?notice=resumed"
+  );
+}

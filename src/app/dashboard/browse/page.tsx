@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 const categories = ["Gaming","Kreator","Komunitas","Bisnis digital","Aset digital lainnya"];
 
 export default async function Browse({searchParams}: {
-  searchParams: Promise<{q?:string;category?:string}>
+  searchParams: Promise<{q?:string;category?:string;error?:string}>
 }) {
   const p = await searchParams;
   const db = await supabaseServer();
@@ -22,9 +22,8 @@ export default async function Browse({searchParams}: {
 
   const {data,error} = await query;
 
-  return <main className="market">
-    <Link href="/dashboard">← Marketplace</Link>
-    <h1>Cari Akun</h1>
+  return <section className="dashmain">
+    <h1>Marketplace</h1>
     <form className="market-search" action="/dashboard/browse">
       <input name="q" defaultValue={p.q} placeholder="Cari nama listing..."/>
       <select name="category" defaultValue={p.category || ""}>
@@ -33,6 +32,9 @@ export default async function Browse({searchParams}: {
       </select>
       <button className="market-primary">Cari</button>
     </form>
+    {p.error === "unavailable" && <div className="alert rekber-message">Listing tidak tersedia atau sudah tidak aktif.</div>}
+    {p.error === "own_listing" && <div className="alert rekber-message">Listing ini milik Anda, jadi tidak dapat diajukan sebagai transaksi.</div>}
+    {p.error === "transaction" && <div className="alert rekber-message">Pengajuan transaksi gagal dibuat. Periksa saldo token, lalu coba lagi.</div>}
     {error ? <p>Database belum siap. Periksa migration Supabase.</p> :
       <div className="market-listings">
         {data?.map(x=><Link className="market-card" key={x.id}
@@ -43,5 +45,5 @@ export default async function Browse({searchParams}: {
         </Link>)}
       </div>}
     {!data?.length && !error && <p className="market-empty">Belum ada listing yang cocok.</p>}
-  </main>;
+  </section>;
 }

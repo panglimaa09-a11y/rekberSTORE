@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { logout } from "@/app/actions";
 import {
   respondToTransaction,
   cancelPendingTransaction
 } from "@/app/marketplace-actions";
+import SubmitButton from "@/components/SubmitButton";
 
 const labels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan seller",
@@ -57,25 +57,7 @@ export default async function Transactions({
     }).format(value || 0);
 
   return (
-    <main className="dash">
-      <aside className="side">
-        <Link className="brand" href="/">◈ Rekber<span>STORE</span></Link>
-        <small>WORKSPACE</small>
-        <Link href="/dashboard">▦ Dashboard</Link>
-        <Link className="selected" href="/dashboard/transactions">⇄ Transaksi Saya</Link>
-        <Link href="/dashboard/topup">◈ Top Up Token</Link>
-        <small>LAYANAN</small>
-        <Link href="/dashboard/browse">⌕ Marketplace</Link>
-        <Link href="/dashboard/sell">＋ Pasang Penawaran</Link>
-        <Link href="/dashboard/my-listings">▤ Penawaran Saya</Link>
-        <small>AKUN</small>
-        <Link href="/">Pusat Informasi</Link>
-        <form action={logout}>
-          <button className="logout" type="submit">Keluar dari akun</button>
-        </form>
-      </aside>
-
-      <section className="dashmain">
+    <section className="dashmain">
         <header>
           <div>
             <small className="eyebrow">TRANSACTION MANAGEMENT</small>
@@ -126,7 +108,11 @@ export default async function Transactions({
                   {data.map(item => (
                     <tr key={item.id}>
                       <td>
-                        <b>{item.title}</b>
+                        <b>
+                          <Link href={"/dashboard/transactions/" + item.id}>
+                            {item.title}
+                          </Link>
+                        </b>
                         <small>ID: {item.id}</small>
                       </td>
                       <td>{item.buyer_id === user.id ? "Buyer" : "Seller"}</td>
@@ -143,15 +129,15 @@ export default async function Transactions({
                           <div className="rekber-actions">
                             <form action={respondToTransaction}>
                               <input type="hidden" name="transaction_id" value={item.id}/>
-                              <button className="btn" name="decision" value="accept" type="submit">
+                              <SubmitButton className="btn" name="decision" value="accept" pendingLabel="Menyetujui…">
                                 Setujui
-                              </button>
+                              </SubmitButton>
                             </form>
                             <form action={respondToTransaction}>
                               <input type="hidden" name="transaction_id" value={item.id}/>
-                              <button className="rekber-reject" name="decision" value="reject" type="submit">
+                              <SubmitButton className="rekber-reject" name="decision" value="reject" pendingLabel="Menolak…">
                                 Tolak
-                              </button>
+                              </SubmitButton>
                             </form>
                           </div>
                         )}
@@ -160,9 +146,9 @@ export default async function Transactions({
                          item.buyer_id === user.id && (
                           <form action={cancelPendingTransaction}>
                             <input type="hidden" name="transaction_id" value={item.id}/>
-                            <button className="rekber-reject" type="submit">
+                            <SubmitButton className="rekber-reject" pendingLabel="Membatalkan…">
                               Batalkan
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
 
@@ -185,6 +171,5 @@ export default async function Transactions({
           </div>
         </div>
       </section>
-    </main>
   );
 }

@@ -65,3 +65,55 @@ export async function logout() {
   await s.auth.signOut();
   redirect("/");
 }
+
+export async function requestPasswordReset(form: FormData) {
+  const p = z
+    .object({ email: z.string().email() })
+    .safeParse({ email: form.get("email") });
+  if (!p.success) redirect("/forgot-password?error=invalid");
+  const s = await supabaseServer();
+  // Link reset diarahkan ke /auth/callback agar kode ditukar sesi di
+  // sana, lalu diteruskan ke /reset-password (memanfaatkan ?next=).
+  const origin =
+    (await headers()).get("origin") ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
+  const { error } = await s.auth.resetPasswordForEmail(p.data.email, {
+    redirectTo: `${origin.replace(/\/+$/, "")}/auth/callback?next=/reset-password`,
+  });
+  if (error) redirect("/forgot-password?error=failed");
+  redirect("/forgot-password?sent=1");
+}
+
+export async function updatePassword(form: FormData) {
+  const p = z
+    .object({ password: z.string().min(8), confirm: z.string().min(8) })
+    .safeParse({
+      password: form.get("password"),
+      confirm: form.get("confirm"),
+    });
+  if (!p.success) redirect("/reset-password?error=invalid");
+  if (p.data.password !== p.data.confirm)
+    redirect("/reset-password?error=mismatch");
+  const s = await supabaseServer();
+  const { data: { user } } = await s.auth.getUser();
+  if (!user) redirect("/reset-password?error=session");
+  const { error } = await s.auth.updateUser({ password: p.data.password });
+  if (error) redirect("/reset-password?error=update");
+  redirect("/login?notice=reset");
+}
+
+export async function updateDisplayName(form: FormData) {
+  const p = z
+    .object({ name: z.string().min(2).max(100) })
+    .safeParse({ name: form.get("name") });
+  if (!p.success) redirect("/dashboard/profile?error=invalid");
+  const s = await supabaseServer();
+  const { data: { user } } = await s.auth.getUser();
+  if (!user) redirect("/login");
+  const { error } = await s.auth.updateUser({
+    data: { display_name: p.data.name },
+  });
+  if (error) redirect("/dashboard/profile?error=update");
+  redirect("/dashboard/profile?notice=updated");
+}
