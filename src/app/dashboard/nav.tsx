@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, useState, type ReactNode } from "react";
-import ModeSwitcher, { parseMode, type DashboardMode } from "@/components/ModeSwitcher";
+import ModeSwitcher from "@/components/ModeSwitcher";
+import { parseMode, type DashboardMode } from "@/lib/dashboard-mode";
 
 type NavLink = {
   href: string;

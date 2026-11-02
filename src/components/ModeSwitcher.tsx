@@ -2,21 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-
-export type DashboardMode = "all" | "buyer" | "seller";
-
-/**
- * Mode peran dibaca dari search param ?mode= agar dapat dibagikan
- * lewat URL dan dirender di server — tanpa state client yang rapuh.
- * Nilai di luar buyer/seller dianggap "all".
- */
-export function parseMode(
-  value: string | string[] | undefined | null
-): DashboardMode {
-  const first = Array.isArray(value) ? value[0] : value;
-  if (first === "buyer" || first === "seller") return first;
-  return "all";
-}
+import { parseMode, type DashboardMode } from "@/lib/dashboard-mode";
 
 const modes: { value: DashboardMode; label: string }[] = [
   { value: "all", label: "Semua" },

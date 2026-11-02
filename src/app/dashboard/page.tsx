@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import ModeSwitcher, { parseMode } from "@/components/ModeSwitcher";
+import ModeSwitcher from "@/components/ModeSwitcher";
+import { parseMode } from "@/lib/dashboard-mode";
 
 const statusLabels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan",

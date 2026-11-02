@@ -6,7 +6,8 @@ import {
   cancelPendingTransaction
 } from "@/app/marketplace-actions";
 import SubmitButton from "@/components/SubmitButton";
-import ModeSwitcher, { parseMode } from "@/components/ModeSwitcher";
+import ModeSwitcher from "@/components/ModeSwitcher";
+import { parseMode } from "@/lib/dashboard-mode";
 
 const labels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan seller",
