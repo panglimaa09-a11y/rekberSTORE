@@ -15,7 +15,15 @@ export async function login(form: FormData) {
   if (!p.success) redirect("/login?error=invalid");
   const s = await supabaseServer();
   const { error } = await s.auth.signInWithPassword(p.data);
-  if (error) redirect("/login?error=invalid");
+  if (error) {
+    // Bedakan penyebab agar tidak menebak: Supabase mengembalikan
+    // kode/pesan berbeda untuk email belum terkonfirmasi vs kredensial salah.
+    const msg = `${(error as { code?: string }).code ?? ""} ${error.message}`.toLowerCase();
+    if (msg.includes("not confirmed") || msg.includes("email_not_confirmed"))
+      redirect("/login?error=unconfirmed");
+    if (msg.includes("invalid")) redirect("/login?error=invalid");
+    redirect("/login?error=failed");
+  }
   redirect("/dashboard");
 }
 
