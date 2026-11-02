@@ -25,22 +25,22 @@ const features = [
 
 const steps = [
   {
-    number: "01",
+    stage: "SEPAKAT",
     title: "Buat kesepakatan",
     text: "Buyer dan seller menentukan barang atau layanan, nominal, serta ketentuan transaksi."
   },
   {
-    number: "02",
+    stage: "TAHAN",
     title: "Buyer menyediakan token",
     text: "Buyer menyediakan 2 token untuk biaya jasa Rekber. Token ditahan saat pengajuan."
   },
   {
-    number: "03",
+    stage: "PERIKSA",
     title: "Seller memberikan persetujuan",
     text: "Seller memeriksa pengajuan. Jika menolak atau buyer membatalkan sebelum persetujuan, token dikembalikan."
   },
   {
-    number: "04",
+    stage: "PROSES",
     title: "Admin menangani proses",
     text: "Transaksi mengikuti prosedur Rekber dan pencatatan status sesuai tahapan layanan."
   }
@@ -70,7 +70,7 @@ export default function Home() {
 
         <div className="lp-nav-actions">
           <Link href="/login" className="lp-login">Masuk</Link>
-          <Link href="/register" className="lp-nav-cta">Buat Akun <span>↗</span></Link>
+          <Link href="/register" className="lp-nav-cta">Buat Akun</Link>
         </div>
       </nav>
 
@@ -83,7 +83,7 @@ export default function Home() {
           <h1>
             Transaksi digital,
             <br />
-            lebih <em>terstruktur.</em>
+            lebih terstruktur.
           </h1>
 
           <p>
@@ -94,7 +94,7 @@ export default function Home() {
 
           <div className="lp-hero-actions">
             <Link href="/register" className="lp-button-primary">
-              Mulai menggunakan Rekber <span>→</span>
+              Mulai menggunakan Rekber
             </Link>
             <Link href="/login" className="lp-button-secondary">
               Masuk akun
@@ -112,50 +112,38 @@ export default function Home() {
               <span className="lp-window-dots">● ● ●</span>
               <b>REKBER WORKSPACE</b>
             </div>
-            <span className="lp-demo-label">PRODUCT FLOW</span>
+            <span className="lp-demo-label">ATURAN TRANSAKSI</span>
           </div>
 
           <div className="lp-visual-heading">
-            <small>ILUSTRASI ALUR TRANSAKSI</small>
-            <h2>Ruang transaksi bersama</h2>
-            <p>Alur konseptual, bukan data transaksi aktual.</p>
+            <small>ATURAN YANG BERLAKU UNTUK SETIAP TRANSAKSI</small>
+            <h2>Buku aturan transaksi</h2>
+            <p>Ketentuan yang dicatat di platform. Bukan janji hasil, bukan data transaksi.</p>
           </div>
 
-          <div className="lp-flow-list">
-            <div className="lp-flow-item">
-              <div className="lp-flow-number active">01</div>
-              <div>
-                <b>Kesepakatan dibuat</b>
-                <small>Buyer dan seller menyusun detail transaksi</small>
-              </div>
-              <span className="lp-flow-check">✓</span>
+          <div className="lp-ledger">
+            <div className="lp-ledger-row">
+              <small>BIAYA JASA REKBER</small>
+              <strong>2 token / transaksi</strong>
+              <p>Ditanggung oleh buyer untuk setiap transaksi.</p>
             </div>
 
-            <div className="lp-flow-item">
-              <div className="lp-flow-number active">02</div>
-              <div>
-                <b>Token buyer ditahan</b>
-                <small>2 token untuk jasa Rekber</small>
-              </div>
-              <span className="lp-flow-check">✓</span>
+            <div className="lp-ledger-row">
+              <small>PENAHANAN TOKEN</small>
+              <strong>Sampai seller menyetujui</strong>
+              <p>Ditolak, dibatalkan, atau kedaluwarsa: token kembali ke saldo buyer.</p>
             </div>
 
-            <div className="lp-flow-item">
-              <div className="lp-flow-number">03</div>
-              <div>
-                <b>Persetujuan seller</b>
-                <small>Pengajuan diperiksa oleh seller</small>
-              </div>
-              <span className="lp-flow-pending">PENDING</span>
+            <div className="lp-ledger-row">
+              <small>BIAYA WEBSITE</small>
+              <strong>Sesuai kesepakatan</strong>
+              <p>Ditanggung buyer, seller, atau dibagi dua. Terpisah dari jasa Rekber.</p>
             </div>
 
-            <div className="lp-flow-item">
-              <div className="lp-flow-number">04</div>
-              <div>
-                <b>Penanganan Rekber</b>
-                <small>Proses sesuai tahapan layanan</small>
-              </div>
-              <span className="lp-flow-lock">◈</span>
+            <div className="lp-ledger-row attention">
+              <small>PEMBAYARAN</small>
+              <strong>Belum aktif</strong>
+              <p>Platform belum memproses pembayaran atau penampungan dana transaksi.</p>
             </div>
           </div>
 
@@ -167,17 +155,17 @@ export default function Home() {
       </section>
 
       <section className="lp-strip">
-        <div><b>01</b><span>Buyer & Seller</span></div>
-        <div><b>02</b><span>Token Wallet</span></div>
-        <div><b>03</b><span>Admin Rekber</span></div>
-        <div><b>04</b><span>Transaction History</span></div>
+        <div><i>◈</i><span>Buyer &amp; Seller</span></div>
+        <div><i>◈</i><span>Token Wallet</span></div>
+        <div><i>◈</i><span>Admin Rekber</span></div>
+        <div><i>◈</i><span>Transaction History</span></div>
       </section>
 
       <section className="lp-section" id="fitur">
         <div className="lp-section-heading">
           <div>
             <span className="lp-eyebrow">PLATFORM CAPABILITIES</span>
-            <h2>Satu workspace untuk<br /><em>mengelola transaksi.</em></h2>
+            <h2>Satu workspace untuk<br />mengelola transaksi.</h2>
           </div>
           <p>
             RekberSTORE berfokus pada pengelolaan kesepakatan,
@@ -186,10 +174,9 @@ export default function Home() {
         </div>
 
         <div className="lp-feature-grid">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <article className="lp-feature-card" key={feature.title}>
               <div className="lp-feature-icon">{feature.icon}</div>
-              <small>0{index + 1} / PLATFORM</small>
               <h3>{feature.title}</h3>
               <p>{feature.text}</p>
             </article>
@@ -201,7 +188,7 @@ export default function Home() {
         <div className="lp-section-heading">
           <div>
             <span className="lp-eyebrow">HOW IT WORKS</span>
-            <h2>Alur transaksi<br /><em>yang lebih jelas.</em></h2>
+            <h2>Alur transaksi<br />yang lebih jelas.</h2>
           </div>
           <p>
             Setiap transaksi mempunyai tahapan dan pencatatan.
@@ -211,8 +198,8 @@ export default function Home() {
 
         <div className="lp-steps">
           {steps.map(step => (
-            <article className="lp-step" key={step.number}>
-              <span>{step.number}</span>
+            <article className="lp-step" key={step.stage}>
+              <span>{step.stage}</span>
               <div className="lp-step-line" />
               <h3>{step.title}</h3>
               <p>{step.text}</p>
@@ -224,7 +211,7 @@ export default function Home() {
       <section className="lp-fees" id="biaya">
         <div className="lp-fees-copy">
           <span className="lp-eyebrow">TOKEN WALLET</span>
-          <h2>Biaya jelas.<br /><em>Transaksi terencana.</em></h2>
+          <h2>Biaya jelas.<br />Transaksi terencana.</h2>
           <p>
             Jasa Rekber dikenakan 2 token dari buyer untuk setiap transaksi.
             Biaya layanan website merupakan komponen terpisah dan disepakati
@@ -269,7 +256,7 @@ export default function Home() {
           </div>
 
           <Link href="/register" className="lp-package-cta">
-            Buat akun RekberSTORE <span>→</span>
+            Buat akun RekberSTORE
           </Link>
         </div>
       </section>
@@ -278,7 +265,7 @@ export default function Home() {
         <div className="lp-section-heading">
           <div>
             <span className="lp-eyebrow">HELP CENTER</span>
-            <h2>Pertanyaan<br /><em>yang sering diajukan.</em></h2>
+            <h2>Pertanyaan<br />yang sering diajukan.</h2>
           </div>
           <p>
             Informasi dasar mengenai sistem token, biaya layanan,
@@ -312,10 +299,10 @@ export default function Home() {
 
       <section className="lp-final-cta">
         <span className="lp-eyebrow">REKBERSTORE PLATFORM</span>
-        <h2>Mulai dengan kesepakatan<br /><em>yang lebih terstruktur.</em></h2>
+        <h2>Mulai dengan kesepakatan<br />yang lebih terstruktur.</h2>
         <p>Buat akun dan kenali workspace RekberSTORE.</p>
         <Link href="/register" className="lp-button-primary">
-          Daftar RekberSTORE <span>→</span>
+          Daftar RekberSTORE
         </Link>
       </section>
 
