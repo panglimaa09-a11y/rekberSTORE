@@ -6,8 +6,8 @@ import SubmitButton from "@/components/SubmitButton";
 
 const packages = [
   { tokens: 1, price: 5000, name: "Starter", detail: "Paket awal" },
-  { tokens: 2, price: 10000, name: "Reguler", detail: "Satu biaya jasa Rekber" },
-  { tokens: 4, price: 15000, name: "Hemat", detail: "Dua biaya jasa Rekber" }
+  { tokens: 2, price: 10000, name: "Reguler", detail: "Satu biaya layanan website" },
+  { tokens: 4, price: 15000, name: "Hemat", detail: "Dua biaya layanan website" }
 ];
 
 const money = (value: number) =>
@@ -24,10 +24,21 @@ const orderLabels: Record<string, string> = {
   cancelled: "Dibatalkan"
 };
 
+/**
+ * Baris ledger lama menyimpan deskripsi "Biaya jasa Rekber" dari
+ * migrasi token. Istilah yang benar adalah biaya layanan website;
+ * tampilkan dengan penamaan yang sudah dikoreksi tanpa mengubah
+ * baris database yang sudah tercatat.
+ */
+const correctedDescription = (description: string | null) =>
+  (description ?? "")
+    .replaceAll("Penahanan biaya jasa Rekber", "Penahanan biaya layanan website")
+    .replaceAll("Biaya jasa Rekber", "Biaya layanan website");
+
 const ledgerLabels: Record<string, string> = {
   topup: "Top Up Token",
   reserve: "Token ditahan untuk transaksi",
-  capture: "Biaya jasa Rekber",
+  capture: "Biaya layanan website",
   release: "Pengembalian token",
   spend: "Penggunaan token",
   refund: "Pengembalian dana token",
@@ -89,7 +100,8 @@ export default async function TokenTopup({
         {params.created && (
           <div className="success rekber-message">
             Pesanan top up berhasil dibuat. ID pesanan: {params.created}.
-            Pembayaran belum tersedia.
+            Saldo bertambah setelah pembayaran terverifikasi; pesanan yang
+            masih menunggu tidak menambah saldo.
           </div>
         )}
 
@@ -238,7 +250,7 @@ export default async function TokenTopup({
                     <tr key={item.id}>
                       <td>
                         {ledgerLabels[item.entry_type] ?? item.entry_type}
-                        {item.description && <small>{item.description}</small>}
+                        {item.description && <small>{correctedDescription(item.description)}</small>}
                       </td>
                       <td>{item.amount} Token</td>
                       <td>{item.balance_after} Token</td>
@@ -253,8 +265,8 @@ export default async function TokenTopup({
 
         <div className="notice">
           <div>
-            <b>Pembayaran belum diaktifkan</b>
-            <p>Pembuatan pesanan saat ini hanya mencatat permintaan ke database. Saldo tidak bertambah dari pesanan pending. Midtrans dan Pakasir belum dihubungkan.</p>
+            <b>Pembayaran top up</b>
+            <p>Pembelian token diproses lewat payment link Pakasir bila gateway sudah dikonfigurasi; bila belum, pesanan tercatat menunggu pembayaran dan saldo tidak bertambah. Dana transaksi tidak lewat provider — dibayar manual lewat QR bisnis rekber penangan. Token adalah biaya layanan website, terpisah dari dana transaksi.</p>
           </div>
         </div>
       </section>

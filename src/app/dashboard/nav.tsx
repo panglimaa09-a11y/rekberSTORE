@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, useState, type ReactNode } from "react";
+import ModeSwitcher, { parseMode, type DashboardMode } from "@/components/ModeSwitcher";
+
+type NavLink = {
+  href: string;
+  label: string;
+  /** Mode yang menampilkan tautan ini; tanpa nilai berarti semua mode. */
+  modes?: Exclude<DashboardMode, "all">[];
+};
 
 const groups: {
   heading: string;
-  links: { href: string; label: string }[];
+  links: NavLink[];
 }[] = [
   {
     heading: "WORKSPACE",
@@ -19,9 +27,9 @@ const groups: {
   {
     heading: "LAYANAN",
     links: [
-      { href: "/dashboard/browse", label: "⌕ Marketplace" },
-      { href: "/dashboard/sell", label: "＋ Pasang Penawaran" },
-      { href: "/dashboard/my-listings", label: "▤ Penawaran Saya" },
+      { href: "/dashboard/browse", label: "⌕ Marketplace", modes: ["buyer"] },
+      { href: "/dashboard/sell", label: "＋ Pasang Penawaran", modes: ["seller"] },
+      { href: "/dashboard/my-listings", label: "▤ Penawaran Saya", modes: ["seller"] },
     ],
   },
   {
@@ -41,13 +49,17 @@ function isSelected(pathname: string, href: string) {
 
 /**
  * Isi sidebar dashboard: bar atas (brand + tombol hamburger) dan
- * menu lipat berisi seluruh tautan + form keluar.
+ * menu lipat berisi pemilih mode, seluruh tautan, + form keluar.
  *
  * Desktop: menu selalu terlihat dan tombol hamburger tersembunyi
  * (diatur CSS) — tampilannya sama seperti sidebar penuh semula.
  * Mobile (<=600px): hanya bar ramping yang terlihat; menu
  * tersembunyi sampai hamburger ditekan, lalu tertutup otomatis
  * setelah navigasi atau saat tombol Escape ditekan.
+ *
+ * Mode menyaring tautan LAYANAN saja; WORKSPACE dan AKUN dipakai
+ * kedua peran. Route yang tidak ditampilkan tetap dapat dibuka
+ * langsung lewat URL.
  */
 export default function DashboardNav({
   logoutForm,
@@ -55,8 +67,15 @@ export default function DashboardNav({
   logoutForm: ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const mode = parseMode(searchParams.get("mode"));
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+
+  const withMode = (href: string) => {
+    if (mode === "all" || !href.startsWith("/dashboard")) return href;
+    return `${href}?mode=${mode}`;
+  };
 
   return (
     <>
@@ -83,23 +102,35 @@ export default function DashboardNav({
           if (event.key === "Escape") close();
         }}
       >
-        {groups.map((group) => (
-          <Fragment key={group.heading}>
-            <small>{group.heading}</small>
-            {group.links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={close}
-                className={
-                  isSelected(pathname, link.href) ? "selected" : undefined
-                }
-              >
-                {link.label}
-              </Link>
-            ))}
-          </Fragment>
-        ))}
+        <div onClick={close}>
+          <ModeSwitcher />
+        </div>
+        {groups.map((group) => {
+          const links = group.links.filter(
+            (link) =>
+              !link.modes ||
+              mode === "all" ||
+              link.modes.includes(mode)
+          );
+          if (links.length === 0) return null;
+          return (
+            <Fragment key={group.heading}>
+              <small>{group.heading}</small>
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={withMode(link.href)}
+                  onClick={close}
+                  className={
+                    isSelected(pathname, link.href) ? "selected" : undefined
+                  }
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </Fragment>
+          );
+        })}
         {logoutForm}
       </div>
     </>

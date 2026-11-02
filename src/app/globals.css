@@ -632,3 +632,17 @@
   .dashmain header .btn{width:100%;white-space:nowrap}
   .metrics>*{min-width:0}
 }
+
+/* Pemilih mode Buyer/Seller: segmen ledger di shell dashboard dan
+   kepala halaman. Satu aksen hijau yang sama, tanpa radius baru. */
+.mode-switch{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.mode-switch-label{font-size:10px;letter-spacing:1px;font-weight:700;color:var(--muted);text-transform:uppercase}
+.mode-switch a{padding:8px 14px;border:1px solid var(--line);border-radius:8px;color:#9aaba5;font-size:12px;font-weight:600;background:#0b1518}
+.mode-switch a.mode-active{background:#143027;color:#a7f3d0;border-color:#2d5748}
+.mode-switch a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.mode-note{font-size:11px;color:var(--muted);margin:0 0 20px}
+.side-menu .mode-switch{margin:2px 0 6px}
+.side-menu .mode-switch a{flex:1;text-align:center;padding:8px 6px}
+@media(max-width:600px){
+  .mode-switch a{flex:1;text-align:center}
+}

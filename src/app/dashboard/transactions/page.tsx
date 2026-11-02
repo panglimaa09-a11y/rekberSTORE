@@ -6,6 +6,7 @@ import {
   cancelPendingTransaction
 } from "@/app/marketplace-actions";
 import SubmitButton from "@/components/SubmitButton";
+import ModeSwitcher, { parseMode } from "@/components/ModeSwitcher";
 
 const labels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan seller",
@@ -21,7 +22,7 @@ const labels: Record<string, string> = {
 
 const notices: Record<string, string> = {
   created: "Pengajuan dibuat. Dua token buyer sedang ditahan.",
-  accepted: "Seller menyetujui transaksi. Dua token telah dikonfirmasi sebagai biaya jasa Rekber.",
+  accepted: "Seller menyetujui transaksi. Dua token telah dikonfirmasi sebagai biaya layanan website.",
   rejected: "Seller menolak transaksi. Dua token telah dikembalikan.",
   cancelled: "Transaksi dibatalkan. Dua token telah dikembalikan.",
   expired: "Waktu persetujuan berakhir. Dua token telah dikembalikan.",
@@ -32,9 +33,10 @@ const notices: Record<string, string> = {
 export default async function Transactions({
   searchParams
 }: {
-  searchParams: Promise<{ notice?: string }>
+  searchParams: Promise<{ notice?: string; mode?: string }>
 }) {
   const params = await searchParams;
+  const mode = parseMode(params.mode);
   const db = await supabaseServer();
 
   const { data: { user } } = await db.auth.getUser();
@@ -43,11 +45,18 @@ export default async function Transactions({
   // Kedaluwarsa diproses saat halaman dibuka oleh salah satu pihak.
   await db.rpc("expire_my_rekber_holds");
 
-  const { data, error } = await db
+  const { data: allData, error } = await db
     .from("transactions")
     .select("id,title,amount,status,created_at,buyer_id,seller_id")
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
+
+  const data =
+    mode === "buyer"
+      ? (allData ?? []).filter((x) => x.buyer_id === user.id)
+      : mode === "seller"
+        ? (allData ?? []).filter((x) => x.seller_id === user.id)
+        : allData;
 
   const money = (value: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -66,6 +75,15 @@ export default async function Transactions({
           </div>
           <Link className="btn secondary" href="/dashboard">Kembali ke dashboard</Link>
         </header>
+
+        <ModeSwitcher />
+        <p className="mode-note">
+          {mode === "buyer"
+            ? "Mode Buyer — hanya transaksi sebagai pembeli."
+            : mode === "seller"
+              ? "Mode Seller — hanya transaksi sebagai penjual."
+              : "Mode Semua — transaksi sebagai pembeli maupun penjual."}
+        </p>
 
         {params.notice && notices[params.notice] && (
           <div className="success rekber-message">{notices[params.notice]}</div>
@@ -167,7 +185,7 @@ export default async function Transactions({
         <div className="notice">
           <div>
             <b>Aturan penahanan token</b>
-            <p>Buyer menyediakan 2 token. Token ditahan sampai seller menyetujui. Penolakan, pembatalan, atau kedaluwarsa mengembalikan token ke saldo buyer.</p>
+            <p>Buyer menyediakan 2 token sebagai biaya layanan website. Token ditahan sampai seller menyetujui. Penolakan, pembatalan, atau kedaluwarsa mengembalikan token ke saldo buyer. Dana transaksi terpisah dari token dan dibayar manual lewat QR bisnis rekber penangan.</p>
           </div>
         </div>
       </section>

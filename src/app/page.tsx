@@ -14,7 +14,7 @@ const features = [
   {
     icon: "◎",
     title: "Biaya transparan",
-    text: "Pisahkan jasa Rekber dan biaya layanan website agar pembagian biaya jelas."
+    text: "Biaya layanan website transparan: 2 token per transaksi, ditanggung buyer. Dana transaksi dibayar manual lewat QR bisnis rekber penangan dan terpisah dari token."
   },
   {
     icon: "▤",
@@ -32,7 +32,7 @@ const steps = [
   {
     stage: "TAHAN",
     title: "Buyer menyediakan token",
-    text: "Buyer menyediakan 2 token untuk biaya jasa Rekber. Token ditahan saat pengajuan."
+    text: "Buyer menyediakan 2 token untuk biaya layanan website. Token ditahan saat pengajuan."
   },
   {
     stage: "PERIKSA",
@@ -41,8 +41,8 @@ const steps = [
   },
   {
     stage: "PROSES",
-    title: "Admin menangani proses",
-    text: "Transaksi mengikuti prosedur Rekber dan pencatatan status sesuai tahapan layanan."
+    title: "Rekber terpilih menangani proses",
+    text: "Rekber terpilih memakai layanan website ini agar kerjanya lebih praktis dan realtime: chat live, status 8 tahap yang diperbarui langsung, dan QR bisnis masing-masing untuk pembayaran manual."
   }
 ];
 
@@ -102,7 +102,7 @@ export default function Home() {
           </div>
 
           <div className="lp-hero-note">
-            <span>✓</span> Biaya jasa dan biaya website dicatat terpisah
+            <span>✓</span> Dana transaksi dan biaya layanan website dicatat terpisah
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function Home() {
 
           <div className="lp-ledger">
             <div className="lp-ledger-row">
-              <small>BIAYA JASA REKBER</small>
+              <small>BIAYA LAYANAN WEBSITE</small>
               <strong>2 token / transaksi</strong>
               <p>Ditanggung oleh buyer untuk setiap transaksi.</p>
             </div>
@@ -134,16 +134,10 @@ export default function Home() {
               <p>Ditolak, dibatalkan, atau kedaluwarsa: token kembali ke saldo buyer.</p>
             </div>
 
-            <div className="lp-ledger-row">
-              <small>BIAYA WEBSITE</small>
-              <strong>Sesuai kesepakatan</strong>
-              <p>Ditanggung buyer, seller, atau dibagi dua. Terpisah dari jasa Rekber.</p>
-            </div>
-
             <div className="lp-ledger-row attention">
-              <small>PEMBAYARAN</small>
-              <strong>Belum aktif</strong>
-              <p>Platform belum memproses pembayaran atau penampungan dana transaksi.</p>
+              <small>DANA TRANSAKSI</small>
+              <strong>Manual via QR bisnis</strong>
+              <p>Dibayar buyer ke QR bisnis rekber penangan. QR bukan bukti pembayaran; status berubah hanya oleh konfirmasi rekber penangan.</p>
             </div>
           </div>
 
@@ -213,21 +207,16 @@ export default function Home() {
           <span className="lp-eyebrow">TOKEN WALLET</span>
           <h2>Biaya jelas.<br />Transaksi terencana.</h2>
           <p>
-            Jasa Rekber dikenakan 2 token dari buyer untuk setiap transaksi.
-            Biaya layanan website merupakan komponen terpisah dan disepakati
-            oleh buyer serta seller.
+            Token adalah biaya layanan website: 2 token dari buyer untuk
+            setiap transaksi. Dana transaksi terpisah dari token dan
+            dibayar manual lewat QR bisnis rekber penangan — platform
+            tidak memproses atau menampung dana.
           </p>
 
           <div className="lp-fee-rule">
-            <span>JASA REKBER</span>
+            <span>BIAYA LAYANAN WEBSITE</span>
             <strong>2 Token <small>/ transaksi</small></strong>
             <p>Ditanggung oleh buyer.</p>
-          </div>
-
-          <div className="lp-fee-rule">
-            <span>BIAYA WEBSITE</span>
-            <strong>Sesuai kesepakatan</strong>
-            <p>Buyer, seller, atau dibagi dua.</p>
           </div>
         </div>
 
@@ -250,8 +239,9 @@ export default function Home() {
           <div className="lp-package-note">
             <span>!</span>
             <p>
-              Top up dan pembayaran gateway belum aktif. Harga di atas
-              merupakan daftar paket yang direncanakan.
+              Pembelian token lewat payment link Pakasir saat gateway
+              dikonfigurasi. Dana transaksi selalu manual lewat QR bisnis
+              rekber penangan.
             </p>
           </div>
 
@@ -275,24 +265,24 @@ export default function Home() {
 
         <div className="lp-faq-list">
           <details>
-            <summary>Berapa biaya jasa Rekber?</summary>
-            <p>Buyer menyediakan 2 token untuk jasa Rekber pada setiap transaksi.</p>
+            <summary>Berapa biaya layanan website?</summary>
+            <p>Buyer menyediakan 2 token untuk biaya layanan website pada setiap transaksi. Token adalah biaya jasa website, bukan biaya jasa rekber; dana transaksi terpisah dan dibayar manual lewat QR bisnis rekber penangan.</p>
           </details>
           <details>
-            <summary>Siapa yang membayar biaya layanan website?</summary>
-            <p>Buyer dan seller dapat menyepakati bahwa biaya website ditanggung buyer, seller, atau dibagi dua. Biaya ini terpisah dari jasa Rekber.</p>
+            <summary>Bagaimana dana transaksi dibayar?</summary>
+            <p>Manual. Buyer memindai QR bisnis milik rekber yang menangani transaksi itu, lalu rekber memverifikasi penerimaan di aplikasi QRIS/banknya sendiri sebelum mengonfirmasi tahap penahanan. Gambar QR bukan bukti pembayaran.</p>
           </details>
           <details>
             <summary>Bagaimana jika seller menolak transaksi?</summary>
-            <p>Dalam rancangan Reserve, dua token buyer dikembalikan jika seller menolak sebelum transaksi disetujui.</p>
+            <p>Dua token buyer dikembalikan jika seller menolak sebelum transaksi disetujui.</p>
           </details>
           <details>
             <summary>Bagaimana cara top up token?</summary>
-            <p>Paket token direncanakan menggunakan Midtrans atau Pakasir. Integrasi pembayaran masih belum aktif.</p>
+            <p>Pembelian token diproses lewat payment link Pakasir. Bila gateway belum dikonfigurasi, pesanan tercatat menunggu pembayaran dan saldo tidak bertambah.</p>
           </details>
           <details>
-            <summary>Apakah RekberSTORE sudah memproses pembayaran transaksi?</summary>
-            <p>Belum. Fitur pembayaran dan penampungan dana transaksi belum aktif. Jangan mengirim dana dengan menganggap platform sudah memprosesnya.</p>
+            <summary>Apakah RekberSTORE memproses pembayaran transaksi?</summary>
+            <p>Tidak. RekberSTORE adalah layanan website untuk rekber terpilih — chat live, status live, dan pencatatan — agar kerja rekber lebih praktis dan realtime. Dana transaksi dibayar manual lewat QR bisnis rekber penangan; platform tidak memproses atau menampung dana, dan tidak mempekerjakan para rekber.</p>
           </details>
         </div>
       </section>

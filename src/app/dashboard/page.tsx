@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import ModeSwitcher, { parseMode } from "@/components/ModeSwitcher";
 
 const statusLabels: Record<string, string> = {
   awaiting_acceptance: "Menunggu persetujuan",
@@ -21,7 +22,13 @@ const money = (value: number) =>
     maximumFractionDigits: 0
   }).format(value || 0);
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams
+}: {
+  searchParams: Promise<{ mode?: string }>
+}) {
+  const params = await searchParams;
+  const mode = parseMode(params.mode);
   const db = await supabaseServer();
   const { data: { user } } = await db.auth.getUser();
 
@@ -33,7 +40,13 @@ export default async function Dashboard() {
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
 
-  const rows = transactions ?? [];
+  const allRows = transactions ?? [];
+  const rows =
+    mode === "buyer"
+      ? allRows.filter((x) => x.buyer_id === user.id)
+      : mode === "seller"
+        ? allRows.filter((x) => x.seller_id === user.id)
+        : allRows;
   const pending = rows.filter(x =>
     ["awaiting_acceptance", "awaiting_payment_provider"].includes(x.status)
   ).length;
@@ -42,6 +55,13 @@ export default async function Dashboard() {
   ).length;
   const completed = rows.filter(x => x.status === "completed").length;
   const disputed = rows.filter(x => x.status === "disputed").length;
+
+  const modeNote =
+    mode === "buyer"
+      ? "Mode Buyer — hanya transaksi sebagai pembeli."
+      : mode === "seller"
+        ? "Mode Seller — hanya transaksi sebagai penjual."
+        : "Mode Semua — transaksi sebagai pembeli maupun penjual.";
 
   return (
     <section className="dashmain">
@@ -53,6 +73,9 @@ export default async function Dashboard() {
           </div>
           <Link className="btn" href="/dashboard/transactions">Lihat transaksi</Link>
         </header>
+
+        <ModeSwitcher />
+        <p className="mode-note">{modeNote}</p>
 
         <section className="metrics">
           <article className="metric">
@@ -140,15 +163,19 @@ export default async function Dashboard() {
           <h2>Akses cepat</h2>
           <div className="rekber-quick-links">
             <Link href="/dashboard/transactions"><b>⇄</b><span>Transaksi Saya<small>Pantau status dan kesepakatan</small></span></Link>
-            <Link href="/dashboard/browse"><b>⌕</b><span>Marketplace<small>Jelajahi penawaran digital yang sah</small></span></Link>
-            <Link href="/dashboard/sell"><b>＋</b><span>Pasang Penawaran<small>Publikasikan aset yang boleh dialihkan</small></span></Link>
+            {mode !== "seller" && (
+              <Link href="/dashboard/browse"><b>⌕</b><span>Marketplace<small>Jelajahi penawaran digital yang sah</small></span></Link>
+            )}
+            {mode !== "buyer" && (
+              <Link href="/dashboard/sell"><b>＋</b><span>Pasang Penawaran<small>Publikasikan aset yang boleh dialihkan</small></span></Link>
+            )}
           </div>
         </section>
 
         <div className="notice">
           <div>
             <b>Informasi keamanan transaksi</b>
-            <p>Periksa detail kesepakatan dan identitas pihak terkait. Pemrosesan pembayaran serta penampungan dana belum diaktifkan.</p>
+            <p>Dana transaksi dibayar manual lewat QR bisnis rekber yang menangani transaksi itu; platform hanya melacak status dan tidak memproses atau menampung dana. Token adalah biaya layanan website, terpisah dari dana transaksi. Gambar QR bukan bukti pembayaran — status berubah hanya oleh konfirmasi rekber penangan.</p>
           </div>
         </div>
       </section>
