@@ -24,6 +24,20 @@ export async function login(form: FormData) {
     if (msg.includes("invalid")) redirect("/login?error=invalid");
     redirect("/login?error=failed");
   }
+  // Bila user mengaktifkan 2FA, sesi password saja (aal1) belum cukup:
+  // arahkan ke halaman tantangan kode sebelum masuk dashboard. Gagal
+  // memeriksa faktor tidak boleh mengunci user keluar — penegakan
+  // cadangan ada di layout dashboard (pemeriksaan AAL).
+  let needsMfa = false;
+  try {
+    const { data: factors } = await s.auth.mfa.listFactors();
+    needsMfa = (factors?.all ?? []).some(
+      (f) => f.factor_type === "totp" && f.status === "verified"
+    );
+  } catch {
+    console.error("Pemeriksaan faktor MFA gagal");
+  }
+  if (needsMfa) redirect("/mfa-challenge");
   redirect("/dashboard");
 }
 
@@ -152,4 +166,125 @@ export async function updateDisplayName(form: FormData) {
   });
   if (error) redirect("/dashboard/profile?error=update");
   redirect("/dashboard/profile?notice=updated");
+}
+
+// ---- 2FA TOTP (Supabase MFA, opt-in per user, tidak pernah dipaksa) ----
+
+export type MfaEnrollState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | {
+      status: "ready";
+      factorId: string;
+      qrCode: string;
+      secret: string;
+    };
+
+// Dipakai lewat useActionState: mengembalikan data pendaftaran (secret +
+// kode QR dari SDK) untuk ditampilkan sekali ke user, bukan redirect.
+// Secret hanya milik user yang bersangkutan dan hanya tampil di
+// browsernya sendiri.
+export async function startMfaEnroll(
+  // Parameter wajib untuk useActionState; sengaja tidak dipakai.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prev: MfaEnrollState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _form: FormData
+): Promise<MfaEnrollState> {
+  const s = await supabaseServer();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) {
+    return { status: "error", error: "Sesi tidak ditemukan. Masuk lagi." };
+  }
+  const { data, error } = await s.auth.mfa.enroll({
+    factorType: "totp",
+    issuer: "RekberSTORE",
+    friendlyName: "RekberSTORE",
+  });
+  if (error || !data?.totp) {
+    return {
+      status: "error",
+      error: "Pendaftaran 2FA gagal dibuat. Coba lagi.",
+    };
+  }
+  return {
+    status: "ready",
+    factorId: data.id,
+    qrCode: data.totp.qr_code,
+    secret: data.totp.secret,
+  };
+}
+
+const uuidPattern = /^[0-9a-f-]{36}$/i;
+
+export async function verifyMfaEnroll(form: FormData) {
+  const factorId = String(form.get("factor_id") || "").trim();
+  const code = String(form.get("code") || "").trim();
+  if (!uuidPattern.test(factorId) || !/^\d{6}$/.test(code)) {
+    redirect("/dashboard/security?error=mfa_invalid");
+  }
+  const s = await supabaseServer();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: challenge, error: challengeError } =
+    await s.auth.mfa.challenge({ factorId });
+  if (challengeError || !challenge?.id) {
+    redirect("/dashboard/security?error=mfa_failed");
+  }
+  const { error } = await s.auth.mfa.verify({
+    factorId,
+    challengeId: challenge.id,
+    code,
+  });
+  if (error) redirect("/dashboard/security?error=mfa_invalid");
+  redirect("/dashboard/security?notice=mfa_enabled");
+}
+
+export async function unenrollMfa(form: FormData) {
+  const factorId = String(form.get("factor_id") || "").trim();
+  if (!uuidPattern.test(factorId)) {
+    redirect("/dashboard/security?error=mfa_invalid");
+  }
+  const s = await supabaseServer();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) redirect("/login");
+  // Menghapus faktor terverifikasi mensyaratkan sesi aal2 (aturan
+  // Supabase); user yang masuk lewat tantangan kode sudah memenuhi itu.
+  const { error } = await s.auth.mfa.unenroll({ factorId });
+  if (error) redirect("/dashboard/security?error=mfa_remove");
+  redirect("/dashboard/security?notice=mfa_removed");
+}
+
+export async function verifyMfaChallenge(form: FormData) {
+  const code = String(form.get("code") || "").trim();
+  if (!/^\d{6}$/.test(code)) redirect("/mfa-challenge?error=invalid");
+  const s = await supabaseServer();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: factors, error: listError } =
+    await s.auth.mfa.listFactors();
+  const factor = factors?.all.find(
+    (f) => f.factor_type === "totp" && f.status === "verified"
+  );
+  if (listError || !factor) redirect("/dashboard");
+  const { data: challenge, error: challengeError } =
+    await s.auth.mfa.challenge({ factorId: factor.id });
+  if (challengeError || !challenge?.id) {
+    redirect("/mfa-challenge?error=failed");
+  }
+  const { error } = await s.auth.mfa.verify({
+    factorId: factor.id,
+    challengeId: challenge.id,
+    code,
+  });
+  if (error) redirect("/mfa-challenge?error=invalid");
+  redirect("/dashboard");
 }

@@ -28,6 +28,7 @@ const groups: {
     heading: "AKUN",
     links: [
       { href: "/dashboard/profile", label: "◉ Profil Saya" },
+      { href: "/dashboard/security", label: "▣ Keamanan 2FA" },
       { href: "/", label: "Pusat Informasi" },
     ],
   },
