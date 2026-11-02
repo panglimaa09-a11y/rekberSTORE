@@ -1,184 +1,188 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getMyRoles } from "@/lib/supabase/roles";
 import ModeSwitcher from "@/components/ModeSwitcher";
-import { parseMode } from "@/lib/dashboard-mode";
+import { parseMode, type DashboardMode } from "@/lib/dashboard-mode";
 
-const statusLabels: Record<string, string> = {
-  awaiting_acceptance: "Menunggu persetujuan",
-  awaiting_payment_provider: "Menunggu proses pembayaran",
-  provider_payment_confirmed: "Pembayaran terkonfirmasi",
-  item_delivery: "Proses penyerahan",
-  buyer_inspection: "Pemeriksaan pembeli",
-  completed: "Selesai",
-  disputed: "Dalam sengketa",
-  refund_pending: "Menunggu penyelesaian refund",
-  cancelled: "Dibatalkan"
+type HubLink = {
+  href: string;
+  icon: string;
+  label: string;
+  desc: string;
+  /** Mode yang menampilkan kartu ini; tanpa nilai berarti semua mode. */
+  modes?: Exclude<DashboardMode, "all">[];
 };
 
-const money = (value: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-  }).format(value || 0);
+const groups: { heading: string; links: HubLink[] }[] = [
+  {
+    heading: "WORKSPACE",
+    links: [
+      {
+        href: "/dashboard/transactions",
+        icon: "⇄",
+        label: "Transaksi Saya",
+        desc: "Pantau status dan kesepakatan",
+      },
+      {
+        href: "/dashboard/topup",
+        icon: "◈",
+        label: "Top Up Token",
+        desc: "Isi token biaya layanan website",
+      },
+    ],
+  },
+  {
+    heading: "LAYANAN",
+    links: [
+      {
+        href: "/dashboard/browse",
+        icon: "⌕",
+        label: "Marketplace",
+        desc: "Jelajahi penawaran digital yang sah",
+        modes: ["buyer"],
+      },
+      {
+        href: "/dashboard/sell",
+        icon: "＋",
+        label: "Pasang Penawaran",
+        desc: "Publikasikan aset yang boleh dialihkan",
+        modes: ["seller"],
+      },
+      {
+        href: "/dashboard/my-listings",
+        icon: "▤",
+        label: "Penawaran Saya",
+        desc: "Daftar penawaran yang Anda pasang",
+        modes: ["seller"],
+      },
+      {
+        href: "/leaderboard",
+        icon: "★",
+        label: "Papan Peringkat Rekber",
+        desc: "Rating bintang dari buyer dan seller",
+      },
+    ],
+  },
+  {
+    heading: "AKUN",
+    links: [
+      {
+        href: "/dashboard/notifications",
+        icon: "◎",
+        label: "Notifikasi",
+        desc: "Aktivitas terbaru untuk Anda",
+      },
+      {
+        href: "/dashboard/profile",
+        icon: "◉",
+        label: "Profil Saya",
+        desc: "Nama dan data akun Anda",
+      },
+      {
+        href: "/dashboard/kyc",
+        icon: "◍",
+        label: "KYC Saya",
+        desc: "Verifikasi identitas ke admin",
+      },
+      {
+        href: "/dashboard/security",
+        icon: "▣",
+        label: "Keamanan 2FA",
+        desc: "Kunci akun lapis kedua",
+      },
+      {
+        href: "/",
+        icon: "◈",
+        label: "Pusat Informasi",
+        desc: "Aturan dan cara kerja RekberSTORE",
+      },
+    ],
+  },
+];
+
+const adminLinks: HubLink[] = [
+  {
+    href: "/dashboard/admin",
+    icon: "▨",
+    label: "Panel Admin",
+    desc: "Sengketa, pengawasan, penunjukan admin",
+  },
+  {
+    href: "/dashboard/admin/profil-bisnis",
+    icon: "▣",
+    label: "Profil Bisnis",
+    desc: "QR bisnis dan dokumen admin",
+  },
+];
 
 export default async function Dashboard({
-  searchParams
+  searchParams,
 }: {
-  searchParams: Promise<{ mode?: string }>
+  searchParams: Promise<{ mode?: string }>;
 }) {
   const params = await searchParams;
   const mode = parseMode(params.mode);
   const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
+  const {
+    data: { user },
+  } = await db.auth.getUser();
 
   if (!user) redirect("/login");
 
-  const { data: transactions, error } = await db
-    .from("transactions")
-    .select("id,title,amount,status,created_at,buyer_id,seller_id")
-    .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-    .order("created_at", { ascending: false });
+  const roles = await getMyRoles(db, user.id);
+  const visibleGroups = roles.isStaff
+    ? [...groups, { heading: "ADMIN", links: adminLinks }]
+    : groups;
 
-  const allRows = transactions ?? [];
-  const rows =
-    mode === "buyer"
-      ? allRows.filter((x) => x.buyer_id === user.id)
-      : mode === "seller"
-        ? allRows.filter((x) => x.seller_id === user.id)
-        : allRows;
-  const pending = rows.filter(x =>
-    ["awaiting_acceptance", "awaiting_payment_provider"].includes(x.status)
-  ).length;
-  const running = rows.filter(x =>
-    ["provider_payment_confirmed", "item_delivery", "buyer_inspection", "refund_pending"].includes(x.status)
-  ).length;
-  const completed = rows.filter(x => x.status === "completed").length;
-  const disputed = rows.filter(x => x.status === "disputed").length;
+  const withMode = (href: string) => {
+    if (mode === "all" || !href.startsWith("/dashboard")) return href;
+    return `${href}?mode=${mode}`;
+  };
 
   const modeNote =
     mode === "buyer"
-      ? "Mode Buyer — hanya transaksi sebagai pembeli."
+      ? "Mode Buyer — hanya fitur pembeli."
       : mode === "seller"
-        ? "Mode Seller — hanya transaksi sebagai penjual."
-        : "Mode Semua — transaksi sebagai pembeli maupun penjual.";
+        ? "Mode Seller — hanya fitur penjual."
+        : "Mode Semua — seluruh fitur.";
 
   return (
     <section className="dashmain">
-        <header>
-          <div>
-            <small className="eyebrow">SECURE TRANSACTION WORKSPACE</small>
-            <h1>Dashboard Rekber</h1>
-            <p>Kelola kesepakatan, pantau transaksi, dan jaga komunikasi tetap terstruktur.</p>
-          </div>
-          <Link className="btn" href="/dashboard/transactions">Lihat transaksi</Link>
-        </header>
-
-        <ModeSwitcher />
-        <p className="mode-note">{modeNote}</p>
-
-        <section className="metrics">
-          <article className="metric">
-            <span>Menunggu proses</span>
-            <b>{pending}</b>
-            <small>Perlu tindak lanjut</small>
-          </article>
-          <article className="metric">
-            <span>Sedang berjalan</span>
-            <b>{running}</b>
-            <small>Dalam alur transaksi</small>
-          </article>
-          <article className="metric">
-            <span>Transaksi selesai</span>
-            <b>{completed}</b>
-            <small>Berhasil diselesaikan</small>
-          </article>
-          <article className="metric">
-            <span>Dalam sengketa</span>
-            <b>{disputed}</b>
-            <small>Perlu peninjauan</small>
-          </article>
-        </section>
-
-        <section className="panel">
-          <div className="rekber-panel-heading">
-            <div>
-              <h2>Aktivitas transaksi terbaru</h2>
-              <p>Transaksi yang melibatkan akun {user.email ?? "Anda"}.</p>
-            </div>
-            <Link href="/dashboard/transactions">Lihat semua</Link>
-          </div>
-
-          {error && (
-            <div className="notice">
-              <div>
-                <b>Data transaksi belum dapat dibaca</b>
-                <p>Periksa koneksi Supabase dan kebijakan Row Level Security pada tabel transactions.</p>
-              </div>
-            </div>
-          )}
-
-          {!error && rows.length === 0 && (
-            <div className="empty">
-              <h3>Belum ada transaksi</h3>
-              <p>Transaksi yang melibatkan Anda akan muncul di ruang kerja ini.</p>
-              <Link className="btn" href="/dashboard/transactions">Buka transaksi saya</Link>
-            </div>
-          )}
-
-          {rows.length > 0 && (
-            <div className="tablewrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Transaksi</th>
-                    <th>Nilai</th>
-                    <th>Status</th>
-                    <th>Tanggal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.slice(0, 6).map(item => (
-                    <tr key={item.id}>
-                      <td>
-                        <b>
-                          <Link href={"/dashboard/transactions/" + item.id}>
-                            {item.title}
-                          </Link>
-                        </b>
-                        <small>{item.buyer_id === user.id ? "Sebagai pembeli" : "Sebagai penjual"}</small>
-                      </td>
-                      <td>{money(item.amount)}</td>
-                      <td><span className="rekber-status">{statusLabels[item.status] ?? item.status}</span></td>
-                      <td>{new Date(item.created_at).toLocaleDateString("id-ID")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section className="panel">
-          <h2>Akses cepat</h2>
-          <div className="rekber-quick-links">
-            <Link href="/dashboard/transactions"><b>⇄</b><span>Transaksi Saya<small>Pantau status dan kesepakatan</small></span></Link>
-            {mode !== "seller" && (
-              <Link href="/dashboard/browse"><b>⌕</b><span>Marketplace<small>Jelajahi penawaran digital yang sah</small></span></Link>
-            )}
-            {mode !== "buyer" && (
-              <Link href="/dashboard/sell"><b>＋</b><span>Pasang Penawaran<small>Publikasikan aset yang boleh dialihkan</small></span></Link>
-            )}
-          </div>
-        </section>
-
-        <div className="notice">
-          <div>
-            <b>Informasi keamanan transaksi</b>
-            <p>Dana transaksi dibayar manual lewat QR bisnis rekber yang menangani transaksi itu; platform hanya melacak status dan tidak memproses atau menampung dana. Token adalah biaya layanan website, terpisah dari dana transaksi. Gambar QR bukan bukti pembayaran — status berubah hanya oleh konfirmasi rekber penangan.</p>
-          </div>
+      <header>
+        <div>
+          <small className="eyebrow">SECURE TRANSACTION WORKSPACE</small>
+          <h1>Dashboard Rekber</h1>
+          <p>Masuk sebagai {user.email ?? "Anda"}.</p>
         </div>
-      </section>
+      </header>
+
+      <ModeSwitcher />
+      <p className="mode-note">{modeNote}</p>
+
+      {visibleGroups.map((group) => {
+        const links = group.links.filter(
+          (link) =>
+            !link.modes || mode === "all" || link.modes.includes(mode)
+        );
+        if (links.length === 0) return null;
+        return (
+          <section key={group.heading} className="hub-group">
+            <small>{group.heading}</small>
+            <div className="rekber-quick-links">
+              {links.map((link) => (
+                <Link key={link.href} href={withMode(link.href)}>
+                  <b>{link.icon}</b>
+                  <span>
+                    {link.label}
+                    <small>{link.desc}</small>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </section>
   );
 }

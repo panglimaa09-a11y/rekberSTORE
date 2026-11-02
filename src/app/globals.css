@@ -785,3 +785,9 @@
 /* Tautan laporan dari dalam chat */
 .chat-report-link{margin-top:10px;font-size:12px}
 .chat-report-link a{color:var(--muted);text-decoration:underline}
+
+/* Hub menu dashboard: kartu langsung ke halaman fitur, tanpa tumpukan section */
+.hub-group{margin-top:26px}
+.hub-group>small{display:block;margin:0 0 10px;color:#688078;letter-spacing:1px;font-size:9px;font-weight:700}
+.hub-group .rekber-quick-links{margin-top:0}
+@media(max-width:600px){.hub-group .rekber-quick-links{grid-template-columns:1fr 1fr}.hub-group .rekber-quick-links>a{flex-direction:column;align-items:flex-start;gap:6px;padding:14px}}
