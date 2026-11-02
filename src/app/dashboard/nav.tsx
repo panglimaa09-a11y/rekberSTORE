@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 
 const groups: {
   heading: string;
@@ -40,28 +40,68 @@ function isSelected(pathname: string, href: string) {
 }
 
 /**
- * Navigasi sidebar. Mengembalikan fragment agar <small> dan <a>
- * tetap menjadi anak langsung <aside className="side"> (CSS yang
- * ada memakai selektor anak langsung .side>small dan .side>a).
+ * Isi sidebar dashboard: bar atas (brand + tombol hamburger) dan
+ * menu lipat berisi seluruh tautan + form keluar.
+ *
+ * Desktop: menu selalu terlihat dan tombol hamburger tersembunyi
+ * (diatur CSS) — tampilannya sama seperti sidebar penuh semula.
+ * Mobile (<=600px): hanya bar ramping yang terlihat; menu
+ * tersembunyi sampai hamburger ditekan, lalu tertutup otomatis
+ * setelah navigasi atau saat tombol Escape ditekan.
  */
-export default function DashboardNav() {
+export default function DashboardNav({
+  logoutForm,
+}: {
+  logoutForm: ReactNode;
+}) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
   return (
     <>
-      {groups.map((group) => (
-        <Fragment key={group.heading}>
-          <small>{group.heading}</small>
-          {group.links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={isSelected(pathname, link.href) ? "selected" : undefined}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </Fragment>
-      ))}
+      <div className="side-bar">
+        <Link className="brand" href="/" onClick={close}>
+          ◈ Rekber<span>STORE</span>
+        </Link>
+        <button
+          type="button"
+          className="side-toggle"
+          aria-expanded={open}
+          aria-controls="dash-menu"
+          aria-label={open ? "Tutup menu navigasi" : "Buka menu navigasi"}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "✕" : "☰"}
+        </button>
+      </div>
+      <div
+        id="dash-menu"
+        className="side-menu"
+        data-open={open}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") close();
+        }}
+      >
+        {groups.map((group) => (
+          <Fragment key={group.heading}>
+            <small>{group.heading}</small>
+            {group.links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={close}
+                className={
+                  isSelected(pathname, link.href) ? "selected" : undefined
+                }
+              >
+                {link.label}
+              </Link>
+            ))}
+          </Fragment>
+        ))}
+        {logoutForm}
+      </div>
     </>
   );
 }

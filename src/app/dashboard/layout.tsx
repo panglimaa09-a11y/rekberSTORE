@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logout } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -40,15 +39,15 @@ export default async function DashboardLayout({
   return (
     <main className="dash">
       <aside className="side">
-        <Link className="brand" href="/">
-          ◈ Rekber<span>STORE</span>
-        </Link>
-        <DashboardNav />
-        <form action={logout}>
-          <button className="logout" type="submit">
-            Keluar dari akun
-          </button>
-        </form>
+        <DashboardNav
+          logoutForm={
+            <form action={logout}>
+              <button className="logout" type="submit">
+                Keluar dari akun
+              </button>
+            </form>
+          }
+        />
       </aside>
       {children}
     </main>

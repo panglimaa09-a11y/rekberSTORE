@@ -602,3 +602,33 @@
 
 /* Wadah widget Turnstile di dalam form auth */
 .turnstile-box{margin:2px 0}
+
+/* Sidebar dashboard: bar atas + menu lipat (perbaikan mobile 2 Nov 2026).
+   Desktop: tampil persis seperti semula — sidebar penuh di kiri, menu
+   selalu terlihat, tombol hamburger tersembunyi. Mobile (<=600px):
+   hanya bar ramping (brand + hamburger) yang terlihat; menu tersembunyi
+   sampai hamburger ditekan, konten langsung terlihat tanpa menggulir
+   melewati seluruh menu. */
+.side-bar{display:flex;align-items:center;justify-content:space-between}
+.side-toggle{display:none}
+.side-menu{display:flex;flex-direction:column;gap:15px;flex:1;min-height:0}
+.side-menu>small{margin:30px 8px 5px;color:#688078;letter-spacing:1px;font-size:9px}
+.side-menu>a{padding:11px;border-radius:8px;color:#9aaba5;font-size:12px}
+.side-menu>a.selected{background:#143027;color:#a7f3d0}
+.side-menu form{margin-top:auto}
+.side-menu form .logout{width:100%}
+.side-toggle:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+@media(max-width:600px){
+  .dash{align-content:start}
+  .side{padding:12px 14px}
+  .side-toggle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;border:1px solid #344644;border-radius:8px;background:none;color:var(--text);font-size:17px;cursor:pointer}
+  .side-menu{display:none;margin-top:12px;gap:7px}
+  .side-menu[data-open="true"]{display:flex}
+  .side-menu>small{display:block;margin:12px 8px 2px}
+  .side-menu>small:first-child{margin-top:2px}
+  .side-menu form{margin-top:6px}
+  .side-menu form .logout{margin-top:0}
+  .dashmain header{flex-direction:column;align-items:stretch;gap:14px}
+  .dashmain header .btn{width:100%;white-space:nowrap}
+  .metrics>*{min-width:0}
+}
