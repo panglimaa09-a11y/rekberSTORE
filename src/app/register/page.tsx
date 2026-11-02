@@ -1,1 +1,78 @@
-import Link from "next/link";import {register} from "@/app/actions";import SubmitButton from "@/components/SubmitButton";export default async function Register({searchParams}:{searchParams:Promise<{error?:string;success?:string}>}){const p=await searchParams;return <main className="auth"><section className="authbox"><Link className="brand" href="/">◈ Rekber<span>STORE</span></Link><small className="eyebrow">CREATE ACCOUNT</small><h1>Buat akun</h1><p>Satu akun dapat berperan sebagai buyer maupun seller.</p>{p.error&&<div className="alert">Pendaftaran gagal. Periksa data dan coba lagi.</div>}{p.success&&<div className="success">Pendaftaran diterima. Periksa email untuk verifikasi.</div>}<form action={register}><label>Nama tampilan<input name="name" required minLength={2}/></label><label>Email<input name="email" type="email" required/></label><label>Password<input name="password" type="password" minLength={8} required/></label><SubmitButton className="btn full" pendingLabel="Memproses…">Buat akun</SubmitButton></form><small>Sudah punya akun? <Link href="/login">Masuk</Link></small></section></main>}
+import Link from "next/link";
+import { register, loginWithGoogle } from "@/app/actions";
+import SubmitButton from "@/components/SubmitButton";
+
+export default async function Register({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+  const p = await searchParams;
+  return (
+    <main className="auth">
+      <section className="authbox">
+        <Link className="brand" href="/">
+          ◈ Rekber<span>STORE</span>
+        </Link>
+        <small className="eyebrow">CREATE ACCOUNT</small>
+        <h1>Buat akun</h1>
+        <p>Satu akun dapat berperan sebagai buyer maupun seller.</p>
+        {p.error === "oauth_unavailable" && (
+          <div className="alert">
+            Login Google belum diaktifkan. Daftar dengan email dan password,
+            atau hubungi admin.
+          </div>
+        )}
+        {p.error === "oauth_failed" && (
+          <div className="alert">
+            Login Google gagal. Coba lagi sebentar lagi.
+          </div>
+        )}
+        {p.error &&
+          p.error !== "oauth_unavailable" &&
+          p.error !== "oauth_failed" && (
+            <div className="alert">
+              Pendaftaran gagal. Periksa data dan coba lagi.
+            </div>
+          )}
+        {p.success && (
+          <div className="success">
+            Pendaftaran diterima. Periksa email untuk verifikasi.
+          </div>
+        )}
+        <form action={register}>
+          <label>
+            Nama tampilan
+            <input name="name" required minLength={2} />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" minLength={8} required />
+          </label>
+          <SubmitButton className="btn full" pendingLabel="Memproses…">
+            Buat akun
+          </SubmitButton>
+        </form>
+        <div className="auth-or">
+          <span>atau</span>
+        </div>
+        <form action={loginWithGoogle}>
+          <input type="hidden" name="source" value="register" />
+          <SubmitButton
+            className="btn full secondary"
+            pendingLabel="Membuka Google…"
+          >
+            Lanjutkan dengan Google
+          </SubmitButton>
+        </form>
+        <small>
+          Sudah punya akun? <Link href="/login">Masuk</Link>
+        </small>
+      </section>
+    </main>
+  );
+}

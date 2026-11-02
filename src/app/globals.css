@@ -590,3 +590,8 @@
 
 /* Baris aksi kelola listing di dalam kartu */
 .market-card .rekber-actions{margin-top:14px}
+
+/* Pemisah "atau" antara form password dan tombol Google di authbox */
+.auth-or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;margin:2px 0}
+.auth-or::before,.auth-or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.auth-or span{white-space:nowrap}
