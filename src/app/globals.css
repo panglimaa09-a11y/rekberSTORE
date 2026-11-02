@@ -663,3 +663,23 @@
   .qr-pay{flex-direction:column}
   .qr-pay img{width:160px;height:160px}
 }
+
+/* Chat transaksi: banner tahap live + daftar pesan + form kirim */
+.chat-stage-banner{display:grid;gap:4px;margin:14px 0;padding:12px 14px;border:1px solid #2d5748;border-radius:10px;background:#0e1f1a}
+.chat-stage-banner b{font-size:12px;color:#a7f3d0}
+.chat-stage-banner small{color:var(--muted);font-size:11px;line-height:1.6}
+.chat-list{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px;max-height:420px;overflow-y:auto}
+.chat-list li{max-width:82%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0b1518;overflow-wrap:anywhere}
+.chat-list li small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}
+.chat-list li p{margin:0;font-size:12px;line-height:1.7;white-space:pre-wrap}
+.chat-list li.chat-mine{justify-self:end;background:#122820;border-color:#315347}
+.chat-list li.chat-theirs{justify-self:start}
+.chat-form{display:grid;gap:10px;margin-top:16px}
+.chat-form label{display:grid;gap:7px;font-size:11px;color:var(--muted)}
+.chat-form textarea{padding:12px;border:1px solid #2b4144;background:#091216;border-radius:8px;color:white;font:inherit;font-size:12px;line-height:1.6;resize:vertical}
+.chat-form .btn{justify-self:start}
+.chat-hint{color:var(--muted);font-size:10px;line-height:1.6}
+.chat-error{margin:0;padding:10px;border-radius:8px;font-size:11px;background:#391d1d;color:#ffc0b9}
+@media(max-width:600px){
+  .chat-list li{max-width:94%}
+}

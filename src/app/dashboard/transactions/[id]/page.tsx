@@ -11,6 +11,7 @@ import {
 } from "@/app/rekber-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import SubmitButton from "@/components/SubmitButton";
+import ChatRoom, { type ChatMessage } from "@/components/ChatRoom";
 import {
   REKBER_STAGES,
   REKBER_STATUS_LABELS,
@@ -170,6 +171,29 @@ export default async function TransactionDetail({
     events = [];
   }
 
+  // Pesan chat transaksi (query segar saat halaman dibuka; Realtime
+  // memperbaruinya di komponen ChatRoom). Gagal baca = chat nonaktif.
+  let chatRows: {
+    id: string;
+    sender_id: string;
+    body: string;
+    created_at: string;
+  }[] = [];
+  let chatAvailable = true;
+  try {
+    const { data, error } = await db
+      .from("transaction_messages")
+      .select("id,sender_id,body,created_at")
+      .eq("transaction_id", id)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw error;
+    chatRows = data ?? [];
+  } catch {
+    chatRows = [];
+    chatAvailable = false;
+  }
+
   // Nama tampilan para aktor, satu panggilan batch.
   const nameMap = new Map<string, string>();
   try {
@@ -180,6 +204,7 @@ export default async function TransactionDetail({
           item.seller_id,
           assignment?.admin_id,
           ...events.map((e) => e.actor_id),
+          ...chatRows.map((m) => m.sender_id),
         ].filter((v): v is string => !!v)
       )
     );
@@ -291,6 +316,14 @@ export default async function TransactionDetail({
     if (actor === "admin") return isHandlingAdmin || isSuperAdmin;
     return false;
   };
+
+  const initialMessages: ChatMessage[] = chatRows.map((row) => ({
+    id: row.id,
+    senderId: row.sender_id,
+    senderName: displayName(row.sender_id),
+    body: row.body,
+    createdAt: row.created_at,
+  }));
 
   return (
     <section className="dashmain">
@@ -464,6 +497,16 @@ export default async function TransactionDetail({
           )}
         </section>
       )}
+
+      <ChatRoom
+        transactionId={item.id}
+        currentUserId={user.id}
+        initialMessages={initialMessages}
+        initialStage={stage}
+        adminAssigned={!!assignment}
+        adminName={assignment ? displayName(assignment.admin_id) : null}
+        chatAvailable={chatAvailable}
+      />
 
       {item.status === "awaiting_acceptance" && isSeller && (
         <section className="panel">

@@ -165,3 +165,51 @@ export async function resolveRekberDispute(form: FormData) {
     )
   );
 }
+
+export type SendMessageState = { ok: boolean; error?: string } | null;
+
+/**
+ * Kirim pesan chat transaksi. Tanpa redirect agar kolom tidak
+ * kehilangan teks saat gagal dan agar Realtime dapat memperbarui
+ * daftar. RLS (peserta transaksi) ditegakkan database.
+ */
+export async function sendTransactionMessage(
+  _prevState: SendMessageState,
+  form: FormData
+): Promise<SendMessageState> {
+  const id = String(form.get("transaction_id") || "").trim();
+  const body = String(form.get("body") || "").trim();
+
+  if (!UUID_RE.test(id) || body.length < 1 || body.length > 5000) {
+    return { ok: false, error: "send_failed" };
+  }
+
+  const db = await supabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await db.from("transaction_messages").insert({
+    transaction_id: id,
+    sender_id: user.id,
+    body,
+  });
+
+  if (error) {
+    const message = (error.message ?? "").toLowerCase();
+    const code = (error as { code?: string }).code ?? "";
+    if (
+      code === "42P01" ||
+      message.includes("does not exist") ||
+      message.includes("relation")
+    ) {
+      return { ok: false, error: "chat_unavailable" };
+    }
+    if (code === "42501" || message.includes("row-level security")) {
+      return { ok: false, error: "not_allowed" };
+    }
+    return { ok: false, error: "send_failed" };
+  }
+
+  revalidatePath(`/dashboard/transactions/${id}`);
+  return { ok: true };
+}
