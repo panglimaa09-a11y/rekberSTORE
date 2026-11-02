@@ -781,3 +781,7 @@
 .chat-share{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .chat-share-confirm{margin-top:12px;display:grid;gap:10px}
 .chat-share-confirm p{font-size:12px;line-height:1.7;color:var(--muted)}
+
+/* Tautan laporan dari dalam chat */
+.chat-report-link{margin-top:10px;font-size:12px}
+.chat-report-link a{color:var(--muted);text-decoration:underline}

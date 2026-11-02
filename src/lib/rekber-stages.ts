@@ -165,6 +165,14 @@ export function rpcErrorToken(error: { message?: string } | null): string {
     "NOT_PENDING",
     "INVALID_NOTE",
     "NOT_STAFF",
+    "CASE_ALREADY_OPEN",
+    "CASE_CLOSED",
+    "CASE_NOT_FOUND",
+    "NOT_CASE_HANDLER",
+    "NOT_TRANSACTION_PARTY",
+    "INVALID_CATEGORY",
+    "INVALID_STATUS",
+    "INVALID_TRANSITION",
   ];
   for (const token of tokens) {
     if (message.includes(token)) return token;

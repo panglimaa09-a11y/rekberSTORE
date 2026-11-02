@@ -11,6 +11,11 @@ import {
   submitRekberRating,
 } from "@/app/rekber-actions";
 import { assignRekberAdmin } from "@/app/admin-actions";
+import {
+  CASE_CATEGORY_LABELS,
+  CASE_STATUS_LABELS,
+} from "@/lib/case-labels";
+import { openRekberCase } from "@/app/case-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import SubmitButton from "@/components/SubmitButton";
 import ChatRoom, { type ChatMessage } from "@/components/ChatRoom";
@@ -61,6 +66,13 @@ const notices: Record<string, string> = {
     "Transaksi ini tidak memiliki admin penangan, jadi penilaian tidak dapat dikirim.",
   rating_unavailable:
     "Fitur penilaian belum aktif — migrasi database belum dijalankan.",
+  case_opened:
+    "Laporan eskalasi terkirim. Kasus ditindaklanjuti sesuai hukum yang berlaku; pesan dan bukti tidak dapat diubah.",
+  case_open: "Kasus eskalasi sudah terbuka untuk transaksi ini.",
+  case_invalid: "Kategori atau alasan laporan tidak valid (alasan min. 10 karakter).",
+  case_error: "Laporan eskalasi gagal diproses. Coba lagi.",
+  case_unavailable:
+    "Fitur eskalasi belum aktif — migrasi database belum dijalankan.",
   invalid: "Permintaan tidak valid.",
 };
 
@@ -306,6 +318,25 @@ export default async function TransactionDetail({
     if (!error) dispute = data;
   } catch {
     dispute = null;
+  }
+
+  // Kasus eskalasi terbuka (bila ada) — RLS mengizinkan pihak + staf.
+  let openCase: {
+    id: string;
+    category: string;
+    status: string;
+    created_at: string;
+  } | null = null;
+  try {
+    const { data, error } = await db
+      .from("escalation_cases")
+      .select("id,category,status,created_at")
+      .eq("transaction_id", id)
+      .in("status", ["open", "under_review", "escalated"])
+      .maybeSingle();
+    if (!error) openCase = data;
+  } catch {
+    openCase = null;
   }
 
   // QR bisnis admin penangan — hanya pada tahap 1 (pembayaran manual).
@@ -737,6 +768,71 @@ export default async function TransactionDetail({
           </form>
         </section>
       )}
+
+      <section className="panel" id="eskalasi">
+        <h2>Laporkan / eskalasi ke tim penindakan</h2>
+        {openCase ? (
+          <div className="notice">
+            <div>
+              <b>
+                Kasus eskalasi sedang ditangani (
+                {CASE_STATUS_LABELS[openCase.status] ?? openCase.status})
+              </b>
+              <p>
+                Kategori:{" "}
+                {CASE_CATEGORY_LABELS[openCase.category] ?? openCase.category}.
+                Laporan ditindaklanjuti sesuai hukum yang berlaku. Pesan
+                chat, lokasi, dan referensi KYC menjadi bundel bukti
+                yang tidak dapat diubah atau dihapus oleh pengguna.
+              </p>
+            </div>
+          </div>
+        ) : (
+          (isBuyer || isSeller) && (
+            <>
+              <p>
+                Bila ada tindakan kriminal, hack-back akun, atau barang
+                yang dikirim tidak sesuai kesepakatan, laporkan di sini.
+                Laporan masuk antrean kasus admin/super-admin dan
+                ditindaklanjuti sesuai hukum yang berlaku.
+              </p>
+              <form action={openRekberCase} className="rekber-form">
+                <input type="hidden" name="transaction_id" value={item.id} />
+                <label>
+                  Kategori laporan
+                  <select name="category" required defaultValue="">
+                    <option value="" disabled>
+                      Pilih kategori
+                    </option>
+                    <option value="kriminal">Tindakan kriminal</option>
+                    <option value="hack_akun">
+                      Hack-back / pengambilalihan akun
+                    </option>
+                    <option value="barang_tidak_sesuai">
+                      Barang tidak sesuai kesepakatan
+                    </option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </label>
+                <label>
+                  Alasan laporan (min. 10 karakter)
+                  <textarea
+                    name="reason"
+                    required
+                    minLength={10}
+                    maxLength={2000}
+                    rows={3}
+                    placeholder="Jelaskan apa yang terjadi, kapan, dan bukti apa yang ada di chat."
+                  />
+                </label>
+                <SubmitButton className="rekber-reject" pendingLabel="Melaporkan…">
+                  Laporkan / eskalasi
+                </SubmitButton>
+              </form>
+            </>
+          )
+        )}
+      </section>
 
       {item.status === "refund_pending" && (
         <div className="notice">

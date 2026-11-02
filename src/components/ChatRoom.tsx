@@ -486,6 +486,11 @@ export default function ChatRoom({
               </div>
             </form>
           )}
+          <p className="chat-report-link">
+            <a href="#eskalasi">
+              Laporkan transaksi ini ke tim penindakan
+            </a>
+          </p>
         </div>
       )}
     </section>

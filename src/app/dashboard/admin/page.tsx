@@ -11,6 +11,10 @@ import {
 } from "@/app/admin-actions";
 import { resolveRekberDispute } from "@/app/rekber-actions";
 import { reviewUserKyc } from "@/app/kyc-actions";
+import {
+  CASE_CATEGORY_LABELS,
+  CASE_STATUS_LABELS,
+} from "@/lib/case-labels";
 import AdminDenied from "@/components/AdminDenied";
 import SubmitButton from "@/components/SubmitButton";
 import { isMissingRpcError } from "@/lib/rekber-stages";
@@ -217,6 +221,68 @@ export default async function AdminPanel({
     userKycQueue = [];
   }
 
+  // -- Antrean kasus eskalasi (semua staf; bundel dibatasi penangan).
+  let cases: {
+    id: string;
+    transaction_id: string;
+    reported_by: string;
+    category: string;
+    reason: string;
+    status: string;
+    handler_id: string | null;
+    created_at: string;
+  }[] = [];
+  let casesUnavailable = false;
+  try {
+    const { data, error } = await db
+      .from("escalation_cases")
+      .select(
+        "id,transaction_id,reported_by,category,reason,status,handler_id,created_at"
+      )
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    cases = data ?? [];
+  } catch (error) {
+    casesUnavailable = isMissingRpcError(
+      error as { code?: string; message?: string }
+    );
+    cases = [];
+  }
+  const caseTxTitles = new Map<string, string>();
+  try {
+    const txIds = Array.from(new Set(cases.map((c) => c.transaction_id)));
+    if (txIds.length > 0) {
+      const { data } = await db
+        .from("transactions")
+        .select("id,title")
+        .in("id", txIds);
+      for (const row of data ?? []) caseTxTitles.set(row.id, row.title);
+    }
+  } catch {
+    // Judul tampil apa adanya (ID pendek) di bawah.
+  }
+
+  // -- Log audit akses (semua staf; policy staff_audit_read).
+  let auditRows: {
+    id: number;
+    actor_id: string | null;
+    transaction_id: string | null;
+    action: string;
+    details: unknown;
+    created_at: string;
+  }[] = [];
+  try {
+    const { data, error } = await db
+      .from("audit_logs")
+      .select("id,actor_id,transaction_id,action,details,created_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (!error) auditRows = (data ?? []) as typeof auditRows;
+  } catch {
+    auditRows = [];
+  }
+
   // -- Nama tampilan, satu panggilan batch untuk semua id yang tampil.
   const nameMap = new Map<string, string>();
   try {
@@ -229,6 +295,9 @@ export default async function AdminPanel({
           ...oversight.map((t) => t.admin_id),
           ...listings.map((l) => l.seller_id),
           ...userKycQueue.map((s) => s.user_id),
+          ...cases.map((c) => c.reported_by),
+          ...cases.map((c) => c.handler_id),
+          ...auditRows.map((a) => a.actor_id),
         ].filter((v): v is string => !!v)
       )
     );
@@ -684,6 +753,104 @@ export default async function AdminPanel({
             </form>
           </article>
         ))}
+      </section>
+
+      <section className="panel">
+        <h2>Kasus eskalasi ({cases.length})</h2>
+        <p>
+          Antrean laporan ke tim penindakan. Bundel bukti (chat, lokasi,
+          referensi KYC, timeline tahap) hanya dibuka super-admin atau
+          admin penangan transaksi — dan setiap pembukaan tercatat di
+          log audit.
+        </p>
+        {casesUnavailable && (
+          <div className="notice">
+            <div>
+              <b>Antrean kasus belum aktif</b>
+              <p>Migrasi kasus eskalasi belum dijalankan.</p>
+            </div>
+          </div>
+        )}
+        {!casesUnavailable && cases.length === 0 && (
+          <div className="empty">
+            <h3>Tidak ada kasus eskalasi</h3>
+          </div>
+        )}
+        {cases.map((c) => (
+          <article key={c.id} className="admin-item">
+            <div>
+              <b>
+                {CASE_CATEGORY_LABELS[c.category] ?? c.category} —{" "}
+                {caseTxTitles.get(c.transaction_id) ??
+                  `Transaksi ${c.transaction_id.slice(0, 8)}…`}
+              </b>
+              <small>
+                {`${CASE_STATUS_LABELS[c.status] ?? c.status} · dilaporkan ${displayName(c.reported_by)} · ${dateLabel(c.created_at) ?? ""}`}
+                {c.handler_id ? ` · ditangani ${displayName(c.handler_id)}` : ""}
+              </small>
+              <p>{c.reason}</p>
+            </div>
+            <Link
+              className="btn secondary"
+              href={`/dashboard/admin/kasus/${c.id}`}
+            >
+              Buka bundel bukti
+            </Link>
+          </article>
+        ))}
+      </section>
+
+      <section className="panel">
+        <h2>Log audit akses</h2>
+        <p>
+          30 akses terakhir ke berkas, bundel bukti, dan antrean
+          tinjauan. Tangkapan layar tidak dapat dicegah sepenuhnya —
+          perlindungan adalah kontrol akses + watermark + audit ini +
+          jalur hukum.
+        </p>
+        {auditRows.length === 0 && (
+          <div className="empty">
+            <h3>Belum ada entri audit</h3>
+          </div>
+        )}
+        {auditRows.length > 0 && (
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Aksi</th>
+                  <th>Oleh</th>
+                  <th>Transaksi</th>
+                  <th>Detail</th>
+                  <th>Waktu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.action}</td>
+                    <td>{displayName(row.actor_id)}</td>
+                    <td>
+                      <small>
+                        {row.transaction_id
+                          ? row.transaction_id.slice(0, 8) + "…"
+                          : "—"}
+                      </small>
+                    </td>
+                    <td>
+                      <small>
+                        {JSON.stringify(row.details ?? {}).slice(0, 120)}
+                      </small>
+                    </td>
+                    <td>
+                      {new Date(row.created_at).toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {roles.isSuperAdmin && (
