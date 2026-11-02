@@ -190,6 +190,11 @@ export default async function TransactionDetail({
     sender_id: string;
     body: string;
     created_at: string;
+    message_type?: string | null;
+    location_lat?: number | null;
+    location_lng?: number | null;
+    location_accuracy_m?: number | null;
+    location_shared_at?: string | null;
   }[] = [];
   let chatAvailable = true;
   try {
@@ -204,6 +209,29 @@ export default async function TransactionDetail({
   } catch {
     chatRows = [];
     chatAvailable = false;
+  }
+
+  // Kolom lokasi dibaca terpisah: bila migrasi lokasi belum dijalankan,
+  // query ini gagal dan pesan tetap tampil sebagai teks biasa.
+  try {
+    const { data, error } = await db
+      .from("transaction_messages")
+      .select(
+        "id,message_type,location_lat,location_lng,location_accuracy_m,location_shared_at"
+      )
+      .eq("transaction_id", id)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw error;
+    const locationById = new Map(
+      (data ?? []).map((row) => [row.id, row])
+    );
+    chatRows = chatRows.map((row) => ({
+      ...row,
+      ...(locationById.get(row.id) ?? {}),
+    }));
+  } catch {
+    // Lokasi belum tersedia — pesan tampil sebagai teks.
   }
 
   // Penilaian yang sudah dikirim penilai ini (satu per transaksi).
@@ -351,6 +379,16 @@ export default async function TransactionDetail({
     senderName: displayName(row.sender_id),
     body: row.body,
     createdAt: row.created_at,
+    messageType: row.message_type === "location" ? "location" : "text",
+    locationLat:
+      typeof row.location_lat === "number" ? row.location_lat : null,
+    locationLng:
+      typeof row.location_lng === "number" ? row.location_lng : null,
+    locationAccuracyM:
+      typeof row.location_accuracy_m === "number"
+        ? row.location_accuracy_m
+        : null,
+    locationSharedAt: row.location_shared_at ?? null,
   }));
 
   // Daftar admin untuk penunjukan oleh super admin.

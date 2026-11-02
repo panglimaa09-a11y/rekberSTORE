@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { sendTransactionMessage } from "@/app/rekber-actions";
+import { sendTransactionLocation, sendTransactionMessage } from "@/app/rekber-actions";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { REKBER_STAGES, stageFromStatus } from "@/lib/rekber-stages";
 import SubmitButton from "@/components/SubmitButton";
@@ -18,6 +18,17 @@ export type ChatMessage = {
   senderName: string;
   body: string;
   createdAt: string;
+  messageType?: "text" | "location";
+  locationLat?: number | null;
+  locationLng?: number | null;
+  locationAccuracyM?: number | null;
+  locationSharedAt?: string | null;
+};
+
+type PendingLocation = {
+  lat: number;
+  lng: number;
+  accuracy: number | null;
 };
 
 type SendState = { ok: boolean; error?: string } | null;
@@ -68,6 +79,14 @@ export default function ChatRoom({
     sendTransactionMessage,
     null
   );
+  const [locationState, locationAction] = useActionState<SendState, FormData>(
+    sendTransactionLocation,
+    null
+  );
+  const [pendingLocation, setPendingLocation] =
+    useState<PendingLocation | null>(null);
+  const [acquiring, setAcquiring] = useState(false);
+  const [geoError, setGeoError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const nameCache = useRef(
     new Map(initialMessages.map((m) => [m.senderId, m.senderName]))
@@ -99,6 +118,11 @@ export default function ChatRoom({
             sender_id: string;
             body: string;
             created_at: string;
+            message_type?: string | null;
+            location_lat?: number | string | null;
+            location_lng?: number | string | null;
+            location_accuracy_m?: number | string | null;
+            location_shared_at?: string | null;
           };
           const cachedName = nameCache.current.get(row.sender_id);
           const fallbackName =
@@ -130,6 +154,21 @@ export default function ChatRoom({
                 senderName,
                 body: row.body,
                 createdAt: row.created_at,
+                messageType:
+                  row.message_type === "location" ? "location" : "text",
+                locationLat:
+                  row.location_lat == null
+                    ? null
+                    : Number(row.location_lat),
+                locationLng:
+                  row.location_lng == null
+                    ? null
+                    : Number(row.location_lng),
+                locationAccuracyM:
+                  row.location_accuracy_m == null
+                    ? null
+                    : Number(row.location_accuracy_m),
+                locationSharedAt: row.location_shared_at ?? null,
               },
             ])
           );
@@ -188,6 +227,51 @@ export default function ChatRoom({
     }
   }, [sendState, router]);
 
+  // Setelah lokasi terkirim: tutup konfirmasi dan tarik data segar.
+  useEffect(() => {
+    if (locationState?.ok) {
+      setPendingLocation(null);
+      setGeoError("");
+      router.refresh();
+    }
+  }, [locationState, router]);
+
+  // Lokasi satu titik (bukan pelacakan live): satu kali baca posisi
+  // perangkat, lalu minta konfirmasi sebelum dikirim ke chat.
+  const requestLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setGeoError(
+        "Perangkat atau browser ini tidak mendukung berbagi lokasi."
+      );
+      return;
+    }
+    setAcquiring(true);
+    setGeoError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setAcquiring(false);
+        setPendingLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy ?? null,
+        });
+      },
+      (error) => {
+        setAcquiring(false);
+        setGeoError(
+          error.code === error.PERMISSION_DENIED
+            ? "Izin lokasi ditolak. Aktifkan izin lokasi browser bila ingin berbagi lokasi."
+            : "Lokasi tidak dapat diambil. Coba lagi."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  const iSharedLocation = messages.some(
+    (m) => m.senderId === currentUserId && m.messageType === "location"
+  );
+
   const stageTitle =
     stage === 0
       ? "Pengajuan — menunggu persetujuan seller"
@@ -236,17 +320,61 @@ export default function ChatRoom({
         </div>
       )}
 
+      {chatAvailable && !iSharedLocation && (
+        <p className="chat-location-reminder">
+          Anda belum membagikan lokasi di transaksi ini. Buyer dan seller
+          wajib membagikan lokasi di chat — gunakan tombol “Bagikan
+          lokasi” di bawah. Admin penangan dan super-admin dapat
+          melihat lokasi yang dibagikan.
+        </p>
+      )}
+
       {messages.length > 0 && (
         <ol className="chat-list">
           {messages.map((message) => {
             const mine = message.senderId === currentUserId;
+            const isLocation =
+              message.messageType === "location" &&
+              message.locationLat != null &&
+              message.locationLng != null;
+            const lat = message.locationLat ?? 0;
+            const lng = message.locationLng ?? 0;
             return (
               <li key={message.id} className={mine ? "chat-mine" : "chat-theirs"}>
                 <small>
                   {message.senderName} ·{" "}
                   {new Date(message.createdAt).toLocaleString("id-ID")}
                 </small>
-                <p>{message.body}</p>
+                {isLocation ? (
+                  <div className="chat-location">
+                    <iframe
+                      title="Pratinjau lokasi yang dibagikan"
+                      loading="lazy"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${(lng - 0.005).toFixed(6)}%2C${(lat - 0.005).toFixed(6)}%2C${(lng + 0.005).toFixed(6)}%2C${(lat + 0.005).toFixed(6)}&layer=mapnik&marker=${lat.toFixed(6)}%2C${lng.toFixed(6)}`}
+                    />
+                    <small>
+                      Lokasi dibagikan{" "}
+                      {message.locationSharedAt
+                        ? new Date(message.locationSharedAt).toLocaleString("id-ID")
+                        : new Date(message.createdAt).toLocaleString("id-ID")}
+                      {message.locationAccuracyM != null &&
+                        ` · akurasi ±${Math.round(message.locationAccuracyM)} m`}
+                    </small>
+                    <a
+                      href={`https://www.openstreetmap.org/?mlat=${lat.toFixed(6)}&mlon=${lng.toFixed(6)}#map=16/${lat.toFixed(6)}/${lng.toFixed(6)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Buka di peta
+                    </a>
+                    <small>
+                      Lokasi satu titik — bukan pelacakan live. Tidak ada
+                      tombol unduh data lokasi.
+                    </small>
+                  </div>
+                ) : (
+                  <p>{message.body}</p>
+                )}
               </li>
             );
           })}
@@ -289,6 +417,76 @@ export default function ChatRoom({
             Kirim pesan
           </SubmitButton>
         </form>
+      )}
+
+      {chatAvailable && (
+        <div className="chat-share">
+          {!pendingLocation && (
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={requestLocation}
+              disabled={acquiring}
+            >
+              {acquiring ? "Mengambil lokasi…" : "Bagikan lokasi"}
+            </button>
+          )}
+          {geoError && (
+            <p className="chat-error" role="alert">
+              {geoError}
+            </p>
+          )}
+          {pendingLocation && (
+            <form action={locationAction} className="chat-share-confirm">
+              <input type="hidden" name="transaction_id" value={transactionId} />
+              <input
+                type="hidden"
+                name="latitude"
+                value={pendingLocation.lat}
+              />
+              <input
+                type="hidden"
+                name="longitude"
+                value={pendingLocation.lng}
+              />
+              <input
+                type="hidden"
+                name="accuracy"
+                value={pendingLocation.accuracy ?? ""}
+              />
+              <p>
+                Bagikan titik ini ke chat? Koordinat{" "}
+                {pendingLocation.lat.toFixed(6)},{" "}
+                {pendingLocation.lng.toFixed(6)}
+                {pendingLocation.accuracy != null &&
+                  ` (akurasi ±${Math.round(pendingLocation.accuracy)} m)`}
+                . Lokasi terlihat buyer, seller, dan admin penangan;
+                tidak ada pelacakan live.
+              </p>
+              {locationState && !locationState.ok && (
+                <p className="chat-error" role="alert">
+                  {locationState.error === "location_unavailable"
+                    ? "Fitur lokasi belum aktif — migrasi database belum dijalankan."
+                    : locationState.error === "not_allowed"
+                      ? "Anda tidak termasuk peserta chat transaksi ini."
+                      : "Lokasi gagal dikirim. Coba lagi."}
+                </p>
+              )}
+              <div className="rekber-actions">
+                <SubmitButton pendingLabel="Membagikan…">
+                  Bagikan titik ini
+                </SubmitButton>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => setPendingLocation(null)}
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       )}
     </section>
   );

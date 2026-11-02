@@ -214,6 +214,76 @@ export async function sendTransactionMessage(
   return { ok: true };
 }
 
+/**
+ * Kirim lokasi satu titik ke chat transaksi (tanpa pelacakan live).
+ * Koordinat disimpan pada baris pesan bertipe location; RLS pesan yang
+ * sudah ada berlaku (pihak transaksi + admin penangan + super_admin).
+ */
+export async function sendTransactionLocation(
+  _prevState: SendMessageState,
+  form: FormData
+): Promise<SendMessageState> {
+  const id = String(form.get("transaction_id") || "").trim();
+  const lat = Number(form.get("latitude"));
+  const lng = Number(form.get("longitude"));
+  const accuracyRaw = form.get("accuracy");
+  const accuracy =
+    accuracyRaw === null || accuracyRaw === ""
+      ? null
+      : Number(accuracyRaw);
+
+  if (
+    !UUID_RE.test(id) ||
+    !Number.isFinite(lat) ||
+    lat < -90 ||
+    lat > 90 ||
+    !Number.isFinite(lng) ||
+    lng < -180 ||
+    lng > 180 ||
+    (accuracy !== null &&
+      (!Number.isFinite(accuracy) || accuracy < 0 || accuracy > 100000))
+  ) {
+    return { ok: false, error: "send_failed" };
+  }
+
+  const db = await supabaseServer();
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await db.from("transaction_messages").insert({
+    transaction_id: id,
+    sender_id: user.id,
+    body: "Lokasi dibagikan",
+    message_type: "location",
+    location_lat: lat,
+    location_lng: lng,
+    location_accuracy_m: accuracy,
+    location_shared_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    const message = (error.message ?? "").toLowerCase();
+    const code = (error as { code?: string }).code ?? "";
+    if (
+      code === "42P01" ||
+      code === "42703" ||
+      code === "PGRST204" ||
+      message.includes("does not exist") ||
+      message.includes("location_lat") ||
+      message.includes("message_type")
+    ) {
+      return { ok: false, error: "location_unavailable" };
+    }
+    if (code === "42501" || message.includes("row-level security")) {
+      return { ok: false, error: "not_allowed" };
+    }
+    return { ok: false, error: "send_failed" };
+  }
+
+  revalidatePath(`/dashboard/transactions/${id}`);
+  return { ok: true };
+}
+
 /** Nilai admin penangan transaksi selesai (1–5 bintang + komentar opsional). */
 export async function submitRekberRating(form: FormData) {
   const id = String(form.get("id") ?? "");
