@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { KYC_ERROR_COPY } from "@/lib/kyc";
 
 const categories = ["Gaming","Kreator","Komunitas","Bisnis digital","Aset digital lainnya"];
 
@@ -35,6 +36,7 @@ export default async function Browse({searchParams}: {
     {p.error === "unavailable" && <div className="alert rekber-message">Listing tidak tersedia atau sudah tidak aktif.</div>}
     {p.error === "own_listing" && <div className="alert rekber-message">Listing ini milik Anda, jadi tidak dapat diajukan sebagai transaksi.</div>}
     {p.error === "transaction" && <div className="alert rekber-message">Pengajuan transaksi gagal dibuat. Periksa saldo token, lalu coba lagi.</div>}
+    {p.error && p.error.startsWith("kyc_") && <div className="alert rekber-message">{KYC_ERROR_COPY[p.error] ?? "KYC wajib sebelum bertransaksi."} <Link href="/dashboard/kyc">Buka halaman KYC</Link></div>}
     {error ? <p>Database belum siap. Periksa migration Supabase.</p> :
       <div className="market-listings">
         {data?.map(x=><Link className="market-card" key={x.id}

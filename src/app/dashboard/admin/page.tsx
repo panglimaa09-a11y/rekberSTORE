@@ -10,6 +10,7 @@ import {
   setListingStatusAdmin,
 } from "@/app/admin-actions";
 import { resolveRekberDispute } from "@/app/rekber-actions";
+import { reviewUserKyc } from "@/app/kyc-actions";
 import AdminDenied from "@/components/AdminDenied";
 import SubmitButton from "@/components/SubmitButton";
 import { isMissingRpcError } from "@/lib/rekber-stages";
@@ -23,6 +24,12 @@ const notices: Record<string, string> = {
   revoke_error: "Pencabutan peran admin gagal. Coba lagi.",
   qr_reviewed: "Profil QR bisnis sudah ditinjau.",
   kyc_reviewed: "Pengajuan KYC sudah ditinjau.",
+  kyc_not_pending: "Pengajuan KYC itu sudah tidak menunggu tinjauan.",
+  kyc_unavailable:
+    "Fitur KYC belum aktif — migrasi database belum dijalankan.",
+  kyc_invalid_note: "Penolakan KYC wajib disertai alasan (min. 10 karakter).",
+  kyc_review_error: "Tinjauan KYC gagal diproses. Coba lagi.",
+  forbidden: "Aksi ini hanya untuk staf.",
   review_invalid: "Putusan atau catatan tinjauan tidak valid.",
   review_error: "Tinjauan gagal diproses. Coba lagi.",
   listing_updated: "Status listing diperbarui.",
@@ -178,6 +185,38 @@ export default async function AdminPanel({
     );
   }
 
+  // -- Antrean KYC pengguna (semua staf: KYC dikirim KE ADMIN untuk
+  //    ditinjau). Gagal baca (tabel belum ada) = antrean kosong + catatan.
+  let userKycQueue: {
+    id: string;
+    user_id: string;
+    legal_name: string;
+    phone_e164: string;
+    identity_document_type: string;
+    identity_document_object_path: string;
+    selfie_object_path: string | null;
+    status: string;
+    submitted_at: string;
+  }[] = [];
+  let userKycUnavailable = false;
+  try {
+    const { data, error } = await db
+      .from("user_kyc_submissions")
+      .select(
+        "id,user_id,legal_name,phone_e164,identity_document_type,identity_document_object_path,selfie_object_path,status,submitted_at"
+      )
+      .eq("status", "pending_review")
+      .order("submitted_at", { ascending: true })
+      .limit(20);
+    if (error) throw error;
+    userKycQueue = data ?? [];
+  } catch (error) {
+    userKycUnavailable = isMissingRpcError(
+      error as { code?: string; message?: string }
+    );
+    userKycQueue = [];
+  }
+
   // -- Nama tampilan, satu panggilan batch untuk semua id yang tampil.
   const nameMap = new Map<string, string>();
   try {
@@ -189,6 +228,7 @@ export default async function AdminPanel({
           ...oversight.map((t) => t.seller_id),
           ...oversight.map((t) => t.admin_id),
           ...listings.map((l) => l.seller_id),
+          ...userKycQueue.map((s) => s.user_id),
         ].filter((v): v is string => !!v)
       )
     );
@@ -239,8 +279,6 @@ export default async function AdminPanel({
     selfie_object_path: string;
     status: string;
     submitted_at: string;
-    docUrl: string | null;
-    selfieUrl: string | null;
   }[] = [];
   if (roles.isSuperAdmin) {
     try {
@@ -286,29 +324,27 @@ export default async function AdminPanel({
         .eq("status", "pending_review")
         .order("submitted_at", { ascending: true })
         .limit(20);
-      if (!error && data) {
-        kycQueue = await Promise.all(
-          data.map(async (row) => {
-            const sign = async (path: string) => {
-              try {
-                const { data: signed } = await db.storage
-                  .from("admin-private-documents")
-                  .createSignedUrl(path, 3600);
-                return signed?.signedUrl ?? null;
-              } catch {
-                return null;
-              }
-            };
-            return {
-              ...row,
-              docUrl: await sign(row.identity_document_object_path),
-              selfieUrl: await sign(row.selfie_object_path),
-            };
-          })
-        );
-      }
+      if (!error) kycQueue = data ?? [];
     } catch {
       kycQueue = [];
+    }
+  }
+
+  // Catat tampilan antrean tinjauan ke log audit (sekali per render bila
+  // ada antrean; gagal catat bukan penghalang tampil).
+  if (qrQueue.length > 0 || kycQueue.length > 0 || userKycQueue.length > 0) {
+    try {
+      await db.rpc("log_rekber_access", {
+        p_transaction_id: null,
+        p_action: "review_queue_view",
+        p_details: {
+          qr_ids: qrQueue.map((q) => q.id),
+          admin_kyc_ids: kycQueue.map((k) => k.id),
+          user_kyc_ids: userKycQueue.map((k) => k.id),
+        },
+      });
+    } catch {
+      // Pencatatan gagal — antrean tetap tampil.
     }
   }
 
@@ -589,6 +625,67 @@ export default async function AdminPanel({
         )}
       </section>
 
+      <section className="panel">
+        <h2>Tinjauan KYC pengguna ({userKycQueue.length})</h2>
+        <p>
+          KYC buyer dan seller dikirim ke admin untuk ditinjau di sini.
+          Berkas hanya dibuka lewat penampil bertanda air dengan log
+          audit, dan tidak pernah terlihat oleh lawan transaksi.
+        </p>
+        {userKycUnavailable && (
+          <div className="notice">
+            <div>
+              <b>Antrean KYC belum aktif</b>
+              <p>Migrasi KYC pengguna belum dijalankan.</p>
+            </div>
+          </div>
+        )}
+        {!userKycUnavailable && userKycQueue.length === 0 && (
+          <div className="empty">
+            <h3>Tidak ada antrean KYC pengguna</h3>
+          </div>
+        )}
+        {userKycQueue.map((submission) => (
+          <article key={submission.id} className="admin-item">
+            <div>
+              <b>{submission.legal_name}</b>
+              <small>
+                {`${submission.identity_document_type} · ${submission.phone_e164} · ${displayName(submission.user_id)} · ${dateLabel(submission.submitted_at) ?? ""}`}
+              </small>
+              <p>
+                <Link
+                  href={`/dashboard/admin/dokumen?path=${encodeURIComponent(submission.identity_document_object_path)}&ctx=kyc_review`}
+                >
+                  Buka dokumen identitas (penampil bertanda air)
+                </Link>{" "}
+                {submission.selfie_object_path && (
+                  <Link
+                    href={`/dashboard/admin/dokumen?path=${encodeURIComponent(submission.selfie_object_path)}&ctx=kyc_review`}
+                  >
+                    Buka swafoto (penampil bertanda air)
+                  </Link>
+                )}
+              </p>
+            </div>
+            <form action={reviewUserKyc} className="dispute-form">
+              <input type="hidden" name="submission_id" value={submission.id} />
+              <label>
+                Catatan tinjauan (wajib bila menolak, min. 10 karakter)
+                <input type="text" name="note" maxLength={500} placeholder="Opsional bila menyetujui" />
+              </label>
+              <div className="rekber-actions">
+                <SubmitButton className="btn" name="decision" value="approved" pendingLabel="Meninjau…">
+                  Setujui
+                </SubmitButton>
+                <SubmitButton className="rekber-reject" name="decision" value="rejected" pendingLabel="Meninjau…">
+                  Tolak
+                </SubmitButton>
+              </div>
+            </form>
+          </article>
+        ))}
+      </section>
+
       {roles.isSuperAdmin && (
         <>
           <section className="panel">
@@ -733,16 +830,16 @@ export default async function AdminPanel({
                     {`${submission.identity_document_type} · ${submission.phone_e164} · ${displayName(submission.admin_user_id)} · ${dateLabel(submission.submitted_at) ?? ""}`}
                   </small>
                   <p>
-                    {submission.docUrl && (
-                      <a href={submission.docUrl} target="_blank" rel="noreferrer">
-                        Buka dokumen identitas
-                      </a>
-                    )}{" "}
-                    {submission.selfieUrl && (
-                      <a href={submission.selfieUrl} target="_blank" rel="noreferrer">
-                        Buka swafoto
-                      </a>
-                    )}
+                    <Link
+                      href={`/dashboard/admin/dokumen?path=${encodeURIComponent(submission.identity_document_object_path)}&ctx=kyc_review`}
+                    >
+                      Buka dokumen identitas (penampil bertanda air)
+                    </Link>{" "}
+                    <Link
+                      href={`/dashboard/admin/dokumen?path=${encodeURIComponent(submission.selfie_object_path)}&ctx=kyc_review`}
+                    >
+                      Buka swafoto (penampil bertanda air)
+                    </Link>
                   </p>
                 </div>
                 <form action={reviewKycSubmission} className="dispute-form">
@@ -775,8 +872,9 @@ export default async function AdminPanel({
             <b>Penunjukan admin oleh super admin</b>
             <p>
               Hanya Tuan (super admin) yang dapat mendaftarkan rekber
-              terpilih dan meninjau profil QR/KYC. Bagian tersebut tidak
-              tampil untuk peran admin biasa.
+              terpilih dan meninjau profil QR/KYC admin. Tinjauan KYC
+              pengguna di atas dapat dilakukan semua staf. Bagian
+              penunjukan tidak tampil untuk peran admin biasa.
             </p>
           </div>
         </div>

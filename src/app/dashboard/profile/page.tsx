@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updateDisplayName } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getUserKycStatus, KYC_STATUS_LABELS } from "@/lib/kyc";
 import SubmitButton from "@/components/SubmitButton";
 
 const dateLabel = (value?: string | null) =>
@@ -19,6 +21,7 @@ export default async function Profile({
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   const displayName =
     typeof metadata.display_name === "string" ? metadata.display_name : "";
+  const kycStatus = await getUserKycStatus(db, user.id);
 
   return (
     <section className="dashmain">
@@ -72,6 +75,15 @@ export default async function Profile({
           <div>
             <small>TERAKHIR MASUK</small>
             <b>{dateLabel(user.last_sign_in_at)}</b>
+          </div>
+          <div>
+            <small>STATUS KYC</small>
+            <b>{KYC_STATUS_LABELS[kycStatus]}</b>
+            <small>
+              <Link href="/dashboard/kyc">
+                {kycStatus === "approved" ? "Lihat KYC" : "Kirim / kelola KYC"}
+              </Link>
+            </small>
           </div>
         </div>
       </section>

@@ -764,3 +764,10 @@
 /* Aksi per pesanan top up (link bayar + periksa status) */
 .topup-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .topup-actions .btn{white-space:nowrap}
+
+/* Penampil berkas privat bertanda air (staf) */
+.doc-viewer{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#060a0c}
+.doc-viewer img{display:block;max-width:100%;margin:0 auto}
+.doc-viewer-frame{width:100%;height:640px;border:0;display:block;background:#fff}
+.doc-watermark{position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;justify-content:space-around;align-items:center;overflow:hidden}
+.doc-watermark span{display:block;color:#fff;opacity:.16;font-size:15px;font-weight:800;text-align:center;transform:rotate(-10deg);white-space:nowrap;padding:0 20px}

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createListing } from "@/app/marketplace-actions";
 import { supabaseServer } from "@/lib/supabase/server";
+import { KYC_ERROR_COPY } from "@/lib/kyc";
 import SubmitButton from "@/components/SubmitButton";
 
 const categories = [
@@ -16,6 +17,7 @@ const errorCopy: Record<string, string> = {
     "Data listing belum valid. Judul 5–100 karakter, deskripsi 20–3000 karakter, harga minimal Rp1.000, kategori harus dipilih, dan pernyataan kepemilikan harus dicentang.",
   database:
     "Listing gagal disimpan. Periksa koneksi dan coba lagi.",
+  ...KYC_ERROR_COPY,
 };
 
 export default async function Sell({
@@ -34,7 +36,12 @@ export default async function Sell({
       <p>Buat listing dengan informasi yang benar dan jelas.</p>
 
       {p.error && errorCopy[p.error] && (
-        <div className="alert rekber-message">{errorCopy[p.error]}</div>
+        <div className="alert rekber-message">
+          {errorCopy[p.error]}{" "}
+          {p.error.startsWith("kyc_") && (
+            <a href="/dashboard/kyc">Buka halaman KYC</a>
+          )}
+        </div>
       )}
 
       <form action={createListing} className="market-form">

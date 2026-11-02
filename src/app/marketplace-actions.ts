@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getUserKycStatus, kycGateErrorKey } from "@/lib/kyc";
 
 const categories = [
   "Gaming",
@@ -32,6 +33,12 @@ export async function createListing(form: FormData) {
   const { data: { user } } = await db.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // Gerbang KYC: seller wajib KYC terverifikasi sebelum pasang penawaran.
+  const sellerKyc = await getUserKycStatus(db, user.id);
+  if (sellerKyc !== "approved") {
+    redirect(`/dashboard/sell?error=${kycGateErrorKey(sellerKyc)}`);
+  }
 
   const { error } = await db.from("marketplace_listings").insert({
     seller_id: user.id,
@@ -63,6 +70,12 @@ export async function requestTransaction(form: FormData) {
   const { data: { user } } = await db.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // Gerbang KYC: buyer wajib KYC terverifikasi sebelum mengajukan transaksi.
+  const buyerKyc = await getUserKycStatus(db, user.id);
+  if (buyerKyc !== "approved") {
+    redirect(`/dashboard/browse?error=${kycGateErrorKey(buyerKyc)}`);
+  }
 
   const { data: transactionId, error } = await db.rpc(
     "create_rekber_transaction_with_reserve",

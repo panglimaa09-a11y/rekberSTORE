@@ -161,6 +161,10 @@ export function rpcErrorToken(error: { message?: string } | null): string {
     "DISPUTE_ALREADY_RESOLVED",
     "TRANSACTION_NOT_COMPLETED",
     "NO_HANDLING_ADMIN",
+    "KYC_ALREADY_APPROVED",
+    "NOT_PENDING",
+    "INVALID_NOTE",
+    "NOT_STAFF",
   ];
   for (const token of tokens) {
     if (message.includes(token)) return token;
