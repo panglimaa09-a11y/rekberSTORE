@@ -760,3 +760,7 @@
 .rating-stars input:checked + span{color:#e8bb67}
 .rating-stars label:has(input:checked){border-color:#e8bb67;color:var(--text)}
 .rating-stars label:has(input:focus-visible){outline:2px solid var(--green);outline-offset:2px}
+
+/* Aksi per pesanan top up (link bayar + periksa status) */
+.topup-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.topup-actions .btn{white-space:nowrap}
