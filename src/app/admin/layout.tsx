@@ -1,17 +1,17 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { logout } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
 import AdminDenied from "@/components/AdminDenied";
-import AdminNav from "@/components/AdminNav";
+import ShellHeader from "@/components/ShellHeader";
 
 /**
  * Shell SENDIRI area admin (/admin/*), terpisah dari shell dashboard
- * user. Navigasi dan guard-nya milik area ini: tanpa sesi, middleware
- * mengarahkan ke /login; bukan staf, halaman penolakan ditampilkan
- * tanpa menu admin.
+ * user. Navigasi antar-fitur hanya lewat hub menu (/admin); halaman
+ * fitur tidak punya sidebar. Guard-nya milik area ini: tanpa sesi,
+ * middleware mengarahkan ke /login; bukan staf, halaman penolakan
+ * ditampilkan tanpa menu admin.
  *
  * Penegakan 2FA sama seperti shell dashboard: bila sesi masih aal1
  * padahal user punya faktor terverifikasi (nextLevel aal2), alihkan
@@ -25,7 +25,6 @@ export default async function AdminLayout({
 }) {
   let needsChallenge = false;
   let isStaff = false;
-  let isSuperAdmin = false;
   try {
     const db = await supabaseServer();
     const { data: aal, error } =
@@ -41,7 +40,6 @@ export default async function AdminLayout({
     if (user) {
       const roles = await getMyRoles(db, user.id);
       isStaff = roles.isStaff;
-      isSuperAdmin = roles.isSuperAdmin;
     }
   } catch {
     needsChallenge = false;
@@ -60,21 +58,20 @@ export default async function AdminLayout({
   }
 
   return (
-    <main className="dash app-bg admin-shell">
-      <aside className="side">
-        <Suspense fallback={null}>
-          <AdminNav
-            isSuperAdmin={isSuperAdmin}
-            logoutForm={
-              <form action={logout}>
-                <button className="logout" type="submit">
-                  Keluar dari akun
-                </button>
-              </form>
-            }
-          />
-        </Suspense>
-      </aside>
+    <main className="dash app-bg">
+      <ShellHeader
+        brandHref="/admin"
+        brandLabel="RekberStore — Panel Admin"
+        badge={{ text: "PANEL ADMIN", tone: "admin" }}
+        menuHref="/admin"
+        logoutForm={
+          <form action={logout}>
+            <button className="logout" type="submit">
+              Keluar dari akun
+            </button>
+          </form>
+        }
+      />
       {children}
     </main>
   );

@@ -30,12 +30,7 @@ const displayName = (name: string, uid: string, selfId: string) => {
   return name ? name : shortId(uid);
 };
 
-export default async function Pesan({
-  searchParams,
-}: {
-  searchParams: Promise<{ mode?: string }>;
-}) {
-  const params = await searchParams;
+export default async function Pesan() {
   const db = await supabaseServer();
   const {
     data: { user },
@@ -57,7 +52,6 @@ export default async function Pesan({
     loadError = true;
   }
 
-  const modeQuery = params.mode ? `?mode=${params.mode}` : "";
 
   return (
     <section className="dashmain">
@@ -70,9 +64,6 @@ export default async function Pesan({
             Pesan terbaru tampil paling atas.
           </p>
         </div>
-        <Link className="btn secondary" href={"/dashboard" + modeQuery}>
-          Kembali ke dashboard
-        </Link>
       </header>
 
       {rpcMissing && (

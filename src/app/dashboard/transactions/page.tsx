@@ -74,7 +74,6 @@ export default async function Transactions({
             <h1>Transaksi Saya</h1>
             <p>Kelola kesepakatan sebagai buyer maupun seller.</p>
           </div>
-          <Link className="btn secondary" href="/dashboard">Kembali ke dashboard</Link>
         </header>
 
         <ModeSwitcher />

@@ -111,9 +111,6 @@ export default async function AdminUserKyc({
             transaksi.
           </p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {noticeText && (

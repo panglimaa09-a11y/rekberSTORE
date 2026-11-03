@@ -33,9 +33,6 @@ export default async function Notifications() {
             sengketa, pesanan, dan KYC. Tidak ada notifikasi email.
           </p>
         </div>
-        <Link className="btn secondary" href="/dashboard">
-          Kembali ke dashboard
-        </Link>
       </header>
 
       {items.length === 0 && (

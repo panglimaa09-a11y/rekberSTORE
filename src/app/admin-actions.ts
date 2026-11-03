@@ -21,9 +21,8 @@ const UUID_RE = /^[0-9a-f-]{36}$/i;
 
 /**
  * Tujuan kembali setelah aksi. Formulir dari shell pemilik mengirim
- * return_to=/pemilik/kelola-admin; formulir /admin tidak mengirimnya
- * dan kembali ke URL lama. Hanya nilai persis dalam allowlist yang
- * diterima — nilai lain diabaikan demi keamanan redirect.
+ * return_to=/pemilik/kelola-admin. Hanya nilai persis dalam allowlist
+ * yang diterima — nilai lain diabaikan demi keamanan redirect.
  */
 const OWNER_MANAGE_URL = "/pemilik/kelola-admin";
 
@@ -62,11 +61,7 @@ async function requireUser() {
  */
 export async function appointRekberAdmin(form: FormData) {
   const email = String(form.get("email") || "").trim().toLowerCase();
-  const base = returnBase(
-    form,
-    ["/admin/daftar-admin", OWNER_MANAGE_URL],
-    "/admin/daftar-admin"
-  );
+  const base = returnBase(form, [OWNER_MANAGE_URL], OWNER_MANAGE_URL);
 
   if (!email.includes("@") || !email.includes(".") || email.length > 254) {
     redirect(withNotice(base, "appoint_invalid"));
@@ -82,18 +77,13 @@ export async function appointRekberAdmin(form: FormData) {
     redirect(withNotice(base, "appoint_error"));
   }
 
-  revalidatePath("/admin/daftar-admin");
   revalidatePath(OWNER_MANAGE_URL);
   redirect(withNotice(base, "appointed"));
 }
 
 export async function revokeRekberAdmin(form: FormData) {
   const userId = String(form.get("user_id") || "").trim();
-  const base = returnBase(
-    form,
-    ["/admin/daftar-admin", OWNER_MANAGE_URL],
-    "/admin/daftar-admin"
-  );
+  const base = returnBase(form, [OWNER_MANAGE_URL], OWNER_MANAGE_URL);
 
   if (!UUID_RE.test(userId)) {
     redirect(withNotice(base, "invalid"));
@@ -107,7 +97,6 @@ export async function revokeRekberAdmin(form: FormData) {
     redirect(withNotice(base, "revoke_error"));
   }
 
-  revalidatePath("/admin/daftar-admin");
   revalidatePath(OWNER_MANAGE_URL);
   redirect(withNotice(base, "revoked"));
 }
@@ -152,11 +141,7 @@ export async function reviewQrProfile(form: FormData) {
   const profileId = String(form.get("profile_id") || "").trim();
   const decision = String(form.get("decision") || "");
   const note = String(form.get("note") || "").trim();
-  const base = returnBase(
-    form,
-    ["/admin/tinjauan-qr", OWNER_MANAGE_URL],
-    "/admin/tinjauan-qr"
-  );
+  const base = returnBase(form, [OWNER_MANAGE_URL], OWNER_MANAGE_URL);
 
   if (
     !UUID_RE.test(profileId) ||
@@ -178,7 +163,6 @@ export async function reviewQrProfile(form: FormData) {
     redirect(withNotice(base, "review_error"));
   }
 
-  revalidatePath("/admin/tinjauan-qr");
   revalidatePath(OWNER_MANAGE_URL);
   redirect(withNotice(base, "qr_reviewed"));
 }

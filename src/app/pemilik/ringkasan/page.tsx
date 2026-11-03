@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
@@ -82,13 +81,10 @@ export default async function OwnerSummary() {
     <section className="dashmain">
       <header>
         <div>
-          <small className="eyebrow">PANEL PEMILIK</small>
+          <small className="eyebrow eyebrow-owner">PANEL PEMILIK</small>
           <h1>Ringkasan platform</h1>
           <p>Angka dari data nyata. Tanpa angka karangan.</p>
         </div>
-        <Link className="btn secondary" href="/pemilik">
-          Kembali ke panel pemilik
-        </Link>
       </header>
 
       {statsUnavailable && (

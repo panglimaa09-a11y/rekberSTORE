@@ -74,9 +74,6 @@ export default async function AdminOversight({
           <h1>Pengawasan transaksi</h1>
           <p>Seluruh transaksi yang tercatat di platform.</p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {oversightUnavailable && (

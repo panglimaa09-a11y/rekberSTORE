@@ -26,8 +26,8 @@ const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
  * migrasi belum dijalankan, badge menampilkan "—", bukan angka
  * karangan. Tanpa tabel metrik — tiap fungsi punya halamannya
  * sendiri. Kartu super-admin hanya tampil untuk super-admin.
- * Satu-satunya jalan kembali ke dashboard adalah tautan di sidebar
- * (tombol header ganda dihapus).
+ * Jalan kembali ke dashboard: tombol header di bawah dan tautan
+ * "Kembali ke menu" di header ramping.
  */
 export default async function AdminHub() {
   const db = await supabaseServer();
@@ -37,9 +37,7 @@ export default async function AdminHub() {
   if (!user) redirect("/login");
 
   const roles = await getMyRoles(db, user.id);
-  const groups = roles.isSuperAdmin
-    ? adminHubGroups
-    : adminHubGroups.slice(0, 3);
+  const groups = adminHubGroups;
 
   const counts = await loadAdminQueueCounts(db, roles.isSuperAdmin);
 
@@ -72,6 +70,7 @@ export default async function AdminHub() {
     <section className="dashmain admin-hub">
       <header>
         <div>
+          <small className="eyebrow">PANEL ADMIN</small>
           <h1>Panel Admin</h1>
           <p>
             Admin di sini adalah rekber terpilih yang memakai layanan
@@ -79,6 +78,9 @@ export default async function AdminHub() {
             {user.email ?? "Anda"}.
           </p>
         </div>
+        <Link className="btn secondary" href="/dashboard">
+          Kembali ke dashboard
+        </Link>
       </header>
 
       {showReminder && (

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
@@ -91,16 +90,13 @@ export default async function OwnerManageAdmins({
     <section className="dashmain">
       <header>
         <div>
-          <small className="eyebrow">PANEL PEMILIK · SUPER ADMIN</small>
+          <small className="eyebrow eyebrow-owner">PANEL PEMILIK · SUPER ADMIN</small>
           <h1>Kelola admin</h1>
           <p>
             Hanya Tuan (super admin) yang dapat mendaftarkan rekber
             terpilih. Tidak ada pendaftaran admin publik.
           </p>
         </div>
-        <Link className="btn secondary" href="/pemilik">
-          Kembali ke panel pemilik
-        </Link>
       </header>
 
       {params.notice && notices[params.notice] && (

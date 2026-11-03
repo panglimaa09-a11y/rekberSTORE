@@ -29,6 +29,20 @@ const config: NextConfig = {
         destination: "/admin/kasus/:id",
         permanent: false,
       },
+      // Pemisahan ADMIN vs SUPER ADMIN (3 Nov 2026): fungsi khusus
+      // super_admin hanya ada di /pemilik. Rute lama dipertahankan
+      // sebagai redirect agar bookmark/tautan lama tidak putus.
+      // Query string diteruskan apa adanya oleh Next.js.
+      {
+        source: "/admin/daftar-admin",
+        destination: "/pemilik/kelola-admin",
+        permanent: false,
+      },
+      {
+        source: "/admin/tinjauan-qr",
+        destination: "/pemilik/kelola-admin",
+        permanent: false,
+      },
     ];
   },
 };

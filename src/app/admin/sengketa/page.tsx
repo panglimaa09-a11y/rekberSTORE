@@ -80,9 +80,6 @@ export default async function AdminDisputes() {
             atau super-admin lewat RPC.
           </p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {disputesUnavailable && (

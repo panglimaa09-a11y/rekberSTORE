@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
@@ -61,9 +60,6 @@ export default async function AdminAuditLog() {
             jalur hukum.
           </p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {auditRows.length === 0 && (

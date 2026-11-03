@@ -14,6 +14,8 @@ type HubLink = {
   modes?: Exclude<DashboardMode, "all">[];
   /** Sembunyikan untuk staf (admin/super_admin) — mis. KYC pengguna. */
   hideForStaff?: boolean;
+  /** Hanya untuk super_admin — mis. kartu masuk Panel Pemilik. */
+  superOnly?: boolean;
 };
 
 const groups: { heading: string; links: HubLink[] }[] = [
@@ -121,7 +123,14 @@ const adminLinks: HubLink[] = [
     href: "/admin",
     icon: "▨",
     label: "Panel Admin",
-    desc: "Sengketa, pengawasan, penunjukan admin",
+    desc: "Sengketa, pengawasan, dan moderasi",
+  },
+  {
+    href: "/pemilik",
+    icon: "◈",
+    label: "Panel Pemilik",
+    desc: "Kelola admin, keuangan, dan ringkasan",
+    superOnly: true,
   },
   {
     href: "/admin/profil-bisnis",
@@ -179,6 +188,7 @@ export default async function Dashboard({
         const links = group.links.filter(
           (link) =>
             !(roles.isStaff && link.hideForStaff) &&
+            !(link.superOnly && !roles.isSuperAdmin) &&
             (!link.modes || mode === "all" || link.modes.includes(mode))
         );
         if (links.length === 0) return null;

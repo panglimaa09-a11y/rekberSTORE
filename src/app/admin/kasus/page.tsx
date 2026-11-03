@@ -91,9 +91,6 @@ export default async function AdminCases() {
             pembukaan tercatat di log audit.
           </p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {casesUnavailable && (

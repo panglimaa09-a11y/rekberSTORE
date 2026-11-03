@@ -76,7 +76,7 @@ export default async function OwnerHub() {
     <section className="dashmain">
       <header>
         <div>
-          <small className="eyebrow">PANEL PEMILIK</small>
+          <small className="eyebrow eyebrow-owner">PANEL PEMILIK</small>
           <h1>Panel Pemilik</h1>
           <p>
             Panel khusus pemilik platform. Masuk sebagai{" "}

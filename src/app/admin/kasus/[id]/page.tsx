@@ -95,9 +95,6 @@ export default async function CaseBundle({
           Kasus belum ada atau fitur eskalasi belum aktif (migrasi belum
           dijalankan).
         </p>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </section>
     );
   }
@@ -123,9 +120,6 @@ export default async function CaseBundle({
           Kasus ini hanya dapat dibuka super-admin atau admin penangan
           transaksi terkait. Status kasus dapat dilihat di panel admin.
         </p>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </section>
     );
   }
@@ -295,9 +289,6 @@ export default async function CaseBundle({
             {CASE_STATUS_LABELS[caseRow.status] ?? caseRow.status}
           </p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       <div className="notice">

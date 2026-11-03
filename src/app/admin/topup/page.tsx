@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
@@ -51,9 +50,6 @@ export default async function AdminTopupOrders() {
           <h1>Pesanan top up (read-only)</h1>
           <p>Pesanan isi token biaya layanan website.</p>
         </div>
-        <Link className="btn secondary" href="/admin">
-          Kembali ke panel admin
-        </Link>
       </header>
 
       {topupUnavailable && (

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
@@ -31,16 +30,13 @@ export default async function OwnerSettings() {
     <section className="dashmain">
       <header>
         <div>
-          <small className="eyebrow">PANEL PEMILIK · READ-ONLY</small>
+          <small className="eyebrow eyebrow-owner">PANEL PEMILIK · READ-ONLY</small>
           <h1>Pengaturan</h1>
           <p>
             Status konfigurasi platform. Halaman ini tidak mengubah
             apa pun.
           </p>
         </div>
-        <Link className="btn secondary" href="/pemilik">
-          Kembali ke panel pemilik
-        </Link>
       </header>
 
       <section className="panel">

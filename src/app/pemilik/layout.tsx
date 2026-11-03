@@ -1,19 +1,19 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { logout } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
 import AdminDenied from "@/components/AdminDenied";
-import OwnerNav from "@/components/OwnerNav";
+import ShellHeader from "@/components/ShellHeader";
 
 /**
  * Shell SENDIRI panel pemilik (/pemilik/*), terpisah dari shell
- * dashboard user dan shell panel admin. Navigasi dan guard-nya
- * milik area ini: tanpa sesi, middleware mengarahkan ke /login;
- * bukan super_admin, halaman penolakan ditampilkan tanpa menu
- * pemilik. Penegakan akhir tetap di RPC security definer (guard
- * super_admin di dalam fungsi), bukan hanya di UI.
+ * dashboard user dan shell panel admin. Navigasi antar-fitur hanya
+ * lewat hub menu (/pemilik); halaman fitur tidak punya sidebar.
+ * Guard-nya milik area ini: tanpa sesi, middleware mengarahkan ke
+ * /login; bukan super_admin, halaman penolakan ditampilkan tanpa
+ * menu pemilik. Penegakan akhir tetap di RPC security definer
+ * (guard super_admin di dalam fungsi), bukan hanya di UI.
  *
  * Penegakan 2FA sama seperti shell dashboard/admin: bila sesi masih
  * aal1 padahal user punya faktor terverifikasi (nextLevel aal2),
@@ -62,20 +62,20 @@ export default async function OwnerLayout({
   }
 
   return (
-    <main className="dash app-bg admin-shell">
-      <aside className="side">
-        <Suspense fallback={null}>
-          <OwnerNav
-            logoutForm={
-              <form action={logout}>
-                <button className="logout" type="submit">
-                  Keluar dari akun
-                </button>
-              </form>
-            }
-          />
-        </Suspense>
-      </aside>
+    <main className="dash app-bg">
+      <ShellHeader
+        brandHref="/pemilik"
+        brandLabel="RekberStore — Panel Pemilik"
+        badge={{ text: "PANEL PEMILIK", tone: "owner" }}
+        menuHref="/pemilik"
+        logoutForm={
+          <form action={logout}>
+            <button className="logout" type="submit">
+              Keluar dari akun
+            </button>
+          </form>
+        }
+      />
       {children}
     </main>
   );

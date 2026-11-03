@@ -1,12 +1,13 @@
 /**
- * Satu sumber kebenaran label + ikon navigasi panel admin.
- * Dipakai AdminNav (client) dan hub /admin (server) agar daftar
- * tidak diduplikasi di dua tempat. Modul murni tanpa import
- * server/client: boleh diimpor komponen mana pun.
+ * Satu sumber kebenaran label + ikon kartu hub panel admin.
+ * Dipakai hub /admin (server) agar daftar tidak diduplikasi.
+ * Modul murni tanpa import server/client: boleh diimpor komponen
+ * mana pun.
  *
  * Glyph dipilih BERBEDA untuk tiap item dan umum dirender font
- * (tanpa emoji — scanner melarang ikon emoji). Lockup brand di bar
- * navigasi memakai gambar logo horizontal RekberSTORE, bukan glyph.
+ * (tanpa emoji — scanner melarang ikon emoji). Lockup brand di
+ * header ramping memakai gambar logo horizontal RekberSTORE,
+ * bukan glyph.
  */
 
 export type AdminQueueKey =
@@ -97,39 +98,4 @@ export const adminHubGroups: AdminNavGroup[] = [
       },
     ],
   },
-  {
-    heading: "SUPER ADMIN",
-    entries: [
-      {
-        href: "/admin/daftar-admin",
-        icon: "＋",
-        label: "Daftarkan Admin",
-        desc: "Rekber terpilih oleh Tuan",
-      },
-      {
-        href: "/admin/tinjauan-qr",
-        icon: "▦",
-        label: "Tinjauan QR",
-        desc: "Setujui QR bisnis admin",
-        queueKey: "qr",
-      },
-    ],
-  },
 ];
-
-/** Entri staf (semua grup kecuali SUPER ADMIN), urutan hub. */
-export const adminStaffEntries: AdminNavEntry[] = adminHubGroups
-  .slice(0, 3)
-  .flatMap((group) => group.entries);
-
-/** Entri khusus super-admin. */
-export const adminSuperEntries: AdminNavEntry[] =
-  adminHubGroups[3].entries;
-
-/** Entri tautan hub /admin (kartu utama, tanpa tautan ke dirinya). */
-export const adminHubEntry: AdminNavEntry = {
-  href: "/admin",
-  icon: "⌂",
-  label: "Panel Admin",
-  desc: "Halaman utama panel admin",
-};
