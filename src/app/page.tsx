@@ -413,6 +413,7 @@ export default function Home() {
         <div>
           <Link href="/login">Masuk</Link>
           <Link href="/register">Daftar</Link>
+          <Link href="/kebijakan-privasi">Kebijakan Privasi</Link>
         </div>
         <small>© 2026 RekberSTORE. Informasi fitur mengikuti status implementasi platform.</small>
       </footer>

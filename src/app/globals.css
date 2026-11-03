@@ -971,3 +971,16 @@
   .lp-promo{padding:64px 19px 4px}
   .lp-promo-grid{grid-template-columns:1fr}
 }
+
+/* Halaman kebijakan privasi: dokumen satu kolom yang mudah dibaca.
+   Mengikuti token .lp-* yang sudah ada; tanpa warna, gradien, atau
+   radius baru. */
+.lp-legal{max-width:780px;margin:0 auto;padding:64px 24px 72px}
+.lp-legal h1{margin:18px 0 8px;font:800 clamp(30px,4vw,42px)/1.15 Manrope,sans-serif;letter-spacing:-1.2px}
+.lp-legal-updated{color:var(--lp-muted);font-size:12px;margin:0 0 28px}
+.lp-legal h2{margin:36px 0 10px;font:800 19px Manrope,sans-serif;letter-spacing:-.3px}
+.lp-legal p,.lp-legal li{color:var(--lp-muted);font-size:15px;line-height:1.85}
+.lp-legal ul{margin:6px 0 0;padding-left:20px;display:grid;gap:8px}
+.lp-legal strong{color:var(--lp-text);font-weight:700}
+.lp-legal a{color:var(--lp-lilac);text-decoration:underline}
+@media(max-width:650px){.lp-legal{padding:48px 20px 56px}.lp-legal p,.lp-legal li{font-size:14px}}
