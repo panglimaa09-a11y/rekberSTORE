@@ -949,3 +949,21 @@
   .side .brand .brand-logo-horizontal{width:140px}
   .authbox .brand .brand-logo-horizontal{width:180px}
 }
+
+/* Seksi promo poster admin di beranda: dua karya Tuan tampil apa
+   adanya (isi karya, termasuk tulisan di dalam gambar, bukan klaim
+   situs). Caption ajakan + klarifikasi terpilih + tombol kontak
+   WhatsApp. Mengikuti token .lp-* yang sudah ada; tanpa warna,
+   gradien, atau radius baru. */
+.lp-promo{max-width:1172px;margin:auto;padding:88px 24px 8px}
+.lp-promo-caption{max-width:720px;margin:15px 0 0;font:700 clamp(20px,3vw,28px)/1.35 Manrope,sans-serif;letter-spacing:-.5px}
+.lp-promo-note{max-width:720px;margin:14px 0 0;color:var(--lp-muted);font-size:13px;line-height:1.8}
+.lp-promo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:30px}
+.lp-promo-figure{margin:0;border:1px solid var(--lp-border);border-radius:14px;overflow:hidden;background:#0a1317}
+.lp-promo-figure img{display:block;width:100%;height:auto}
+.lp-promo-actions{margin-top:26px}
+.lp-promo-actions .lp-button-primary span{font-weight:600;opacity:.85}
+@media(max-width:650px){
+  .lp-promo{padding:64px 19px 4px}
+  .lp-promo-grid{grid-template-columns:1fr}
+}

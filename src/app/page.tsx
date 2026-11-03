@@ -209,6 +209,49 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="lp-promo" aria-label="Admin Rekber terpilih">
+        <span className="lp-eyebrow">ADMIN REKBER</span>
+        <p className="lp-promo-caption">
+          Ayo bergabung menjadi Admin Rekber Resmi RekberStore.my.id dan
+          jadilah bagian dari ekosistem transaksi online yang aman, nyaman,
+          dan terpercaya!
+        </p>
+        <p className="lp-promo-note">
+          Admin Rekber adalah para rekber terpilih yang sudah dikenal dan
+          didaftarkan ke platform.
+        </p>
+
+        <div className="lp-promo-grid">
+          <div className="lp-promo-figure">
+            <Image
+              src="/brand/promo-admin-rekrutmen.png"
+              alt="Poster ajakan menjadi Admin Rekber Resmi RekberStore"
+              width="1254"
+              height="1254"
+            />
+          </div>
+          <div className="lp-promo-figure">
+            <Image
+              src="/brand/promo-admin-syarat.png"
+              alt="Poster persyaratan menjadi Partner Admin RekberStore"
+              width="1216"
+              height="1293"
+            />
+          </div>
+        </div>
+
+        <div className="lp-promo-actions">
+          <a
+            className="lp-button-primary"
+            href="https://wa.me/6282231110994"
+            target="_blank"
+            rel="noopener"
+          >
+            Hubungi via WhatsApp <span>082231110994</span>
+          </a>
+        </div>
+      </section>
+
       <section className="lp-section" id="fitur">
         <div className="lp-section-heading">
           <div>
