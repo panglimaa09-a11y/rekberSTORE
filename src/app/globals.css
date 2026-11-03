@@ -677,6 +677,14 @@
 }
 .auth>*{position:relative;z-index:1}
 
+/* Kartu auth opacity 30% (background alpha 0.3, transparan 70%) agar background gambar 1 terlihat.
+   Override diletakkan setelah aturan bersama .mock,.authbox,.card,.metric,
+   .panel sehingga hanya .authbox yang berubah; .mock/.card/.metric/.panel
+   tetap pekat. Tanpa properti opacity: teks, label, input, dan tombol di
+   dalam kartu tetap pekat penuh (input mempertahankan background pekatnya
+   sendiri). Border, radius, dan padding kartu tidak diubah. */
+.authbox{background:linear-gradient(145deg,rgba(17,30,34,.3),rgba(11,20,24,.3))}
+
 /* Background bersama shell setelah login (dashboard, admin,
    pemilik): aset gambar 2 full-screen + overlay gelap transparan.
    Kartu konten mempertahankan background solid-nya sendiri agar
