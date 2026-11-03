@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { loadDisplayNames, money } from "@/lib/admin-view";
 import { listingImagePublicUrl } from "@/lib/listing-image";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { requestTransaction } from "@/app/marketplace-actions";
 
 /**
@@ -75,7 +76,7 @@ export default async function Toko({ params }: { params: Promise<{ sellerId: str
       <header className="store-head">
         <span className="store-avatar" aria-hidden="true">{initial}</span>
         <div>
-          <h1>{storeName}</h1>
+          <h1>{storeName}<VerifiedBadge isStaff={isStaff} /></h1>
           <p className="shop-seller">
             {isOwn ? "Ini toko Anda." : "Toko penjual di marketplace RekberSTORE."}
             {isStaff ? " Rekber Terpilih." : ""}

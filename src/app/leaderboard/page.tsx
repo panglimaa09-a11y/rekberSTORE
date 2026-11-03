@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
 import LeaderboardRefresh from "@/components/LeaderboardRefresh";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 type LeaderboardRow = {
   admin_id: string;
@@ -87,7 +88,10 @@ export default async function Leaderboard() {
                     {initials(row.display_name)}
                   </span>
                   <span className="lb-name">
-                    <b>{name}</b>
+                    {/* Baris leaderboard hanya berisi admin (RPC
+                        get_rekber_leaderboard mengagregat admin_ratings
+                        per admin_id), jadi lencana tampil untuk semua baris. */}
+                    <b>{name}<VerifiedBadge isStaff size="small" /></b>
                     <small>
                       {row.completed_count} transaksi selesai ditangani
                     </small>

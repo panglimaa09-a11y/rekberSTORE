@@ -889,6 +889,14 @@
 .shop-hero img{width:100%;height:100%;object-fit:cover;display:block}
 .shop-hero-empty{display:grid;place-items:center;height:100%;color:#5f7a70;font-size:11px;letter-spacing:1px;text-align:center;padding:10px;line-height:1.8}
 .shop-badge{position:absolute;top:8px;left:8px;background:#40d5a0;color:#062016;font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px;letter-spacing:.4px;z-index:1}
+/* Lencana "✓ Terverifikasi" untuk identitas staf. Keluarga pil yang sama
+   dengan .shop-badge ("Rekber Terpilih"), dibedakan warnanya (ungu/lilac,
+   aksen panel admin) agar kedua lencana tidak menyatu saat berdampingan.
+   Glyph ✓ adalah teks, bukan emoji. Inline (bukan absolute) karena lencana
+   ini menempel pada nama, bukan pada gambar. */
+.verified-badge{display:inline-flex;align-items:center;white-space:nowrap;vertical-align:middle;background:rgba(124,58,237,.22);color:#d9ccff;border:1px solid rgba(168,85,247,.55);font-size:11px;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.3px;margin-inline-start:6px}
+.verified-badge-sm{font-size:10px;padding:3px 7px}
+.shop-seller-line{display:flex;align-items:center;flex-wrap:wrap}
 .shop-body{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
 .shop-body small{color:#54dca8;font-size:11px}
 .shop-body h3{font-size:14px;margin:0;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}

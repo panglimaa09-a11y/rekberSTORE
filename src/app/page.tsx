@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 const features = [
   {
@@ -95,7 +96,10 @@ async function LeaderboardPreview() {
           {rows.map((row, index) => (
             <li key={row.admin_id}>
               <b>#{index + 1}</b>
-              <span>{row.display_name.trim() || "Rekber terpilih"}</span>
+              {/* Baris leaderboard hanya berisi admin (lihat
+                  get_rekber_leaderboard), jadi lencana tampil
+                  untuk semua baris. */}
+              <span>{row.display_name.trim() || "Rekber terpilih"}<VerifiedBadge isStaff size="small" /></span>
               <strong>★ {Number(row.avg_stars).toFixed(2)}</strong>
               <small>
                 {row.rating_count} penilaian · {row.completed_count}{" "}

@@ -5,6 +5,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { loadDisplayNames, displayNameFor } from "@/lib/admin-view";
 import { listingImagePublicUrl } from "@/lib/listing-image";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import SubmitButton from "@/components/SubmitButton";
 
 export default async function Item({ params }: { params: Promise<{ id: string }> }) {
@@ -53,6 +54,7 @@ export default async function Item({ params }: { params: Promise<{ id: string }>
         <p className="shop-seller">
           Dijual oleh <Link className="shop-seller-link" href={"/dashboard/toko/" + item.seller_id}>{displayNameFor(nameMap, user.id, item.seller_id)}</Link>
           {isStaffSeller ? " · Rekber Terpilih" : ""}
+          <VerifiedBadge isStaff={isStaffSeller} size="small" />
         </p>
         <h2>
           {new Intl.NumberFormat("id-ID", {

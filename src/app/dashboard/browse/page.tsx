@@ -5,6 +5,7 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
 import { KYC_ERROR_COPY } from "@/lib/kyc";
 import { loadDisplayNames, displayNameFor } from "@/lib/admin-view";
 import { listingImagePublicUrl } from "@/lib/listing-image";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { requestTransaction } from "@/app/marketplace-actions";
 
 const categories = ["Gaming","Kreator","Komunitas","Bisnis digital","Aset digital lainnya"];
@@ -91,7 +92,10 @@ export default async function Browse({searchParams}: {
               <div className="shop-body">
                 <small>{x.category}</small>
                 <h3><Link href={"/dashboard/items/" + x.id}>{x.title}</Link></h3>
-                <Link className="shop-seller shop-seller-link" href={"/dashboard/toko/" + x.seller_id}>Penjual: {displayNameFor(nameMap, user.id, x.seller_id)}</Link>
+                <span className="shop-seller-line">
+                  <Link className="shop-seller shop-seller-link" href={"/dashboard/toko/" + x.seller_id}>Penjual: {displayNameFor(nameMap, user.id, x.seller_id)}</Link>
+                  <VerifiedBadge isStaff={isStaff} size="small" />
+                </span>
                 <strong className="shop-price">{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(x.price)}</strong>
                 {isOwn ? (
                   <span className="shop-buy-note">Listing milik Anda</span>

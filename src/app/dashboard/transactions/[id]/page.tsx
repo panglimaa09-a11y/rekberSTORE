@@ -18,6 +18,7 @@ import {
 import { openRekberCase } from "@/app/case-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import SubmitButton from "@/components/SubmitButton";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import ChatRoom, { type ChatMessage } from "@/components/ChatRoom";
 import {
   REKBER_STAGES,
@@ -262,6 +263,17 @@ export default async function TransactionDetail({
     alreadyRated = false;
   }
 
+  // Staf (lencana "✓ Terverifikasi"). Pola yang sama dengan
+  // browse/items/toko: RPC belum ada bila migrasi 80003 belum
+  // dijalankan — lencana absen, nama tetap tampil.
+  let staffIds = new Set<string>();
+  try {
+    const { data: staff } = await db.rpc("list_rekber_staff_ids");
+    if (Array.isArray(staff)) staffIds = new Set(staff.map(String));
+  } catch {
+    staffIds = new Set<string>();
+  }
+
   // Nama tampilan para aktor, satu panggilan batch.
   const nameMap = new Map<string, string>();
   try {
@@ -486,11 +498,11 @@ export default async function TransactionDetail({
           </div>
           <div>
             <small>PEMBELI</small>
-            <b>{isBuyer ? "Anda" : displayName(item.buyer_id)}</b>
+            <b>{isBuyer ? "Anda" : displayName(item.buyer_id)}<VerifiedBadge isStaff={staffIds.has(item.buyer_id)} size="small" /></b>
           </div>
           <div>
             <small>PENJUAL</small>
-            <b>{isSeller ? "Anda" : displayName(item.seller_id)}</b>
+            <b>{isSeller ? "Anda" : displayName(item.seller_id)}<VerifiedBadge isStaff={staffIds.has(item.seller_id)} size="small" /></b>
           </div>
           <div>
             <small>TAHAP SAAT INI</small>
@@ -500,7 +512,7 @@ export default async function TransactionDetail({
             <small>ADMIN PENANGAN</small>
             <b>
               {assignment
-                ? displayName(assignment.admin_id)
+                ? <>{displayName(assignment.admin_id)}<VerifiedBadge isStaff={staffIds.has(assignment.admin_id)} size="small" /></>
                 : assignmentMissing
                   ? "Belum dapat dibaca"
                   : "Belum ditunjuk"}
