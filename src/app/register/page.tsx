@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { register, loginWithGoogle } from "@/app/actions";
+import { register } from "@/app/actions";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import SubmitButton from "@/components/SubmitButton";
 import TurnstileWidget from "@/components/TurnstileWidget";
 
@@ -72,15 +73,7 @@ export default async function Register({
         <div className="auth-or">
           <span>atau</span>
         </div>
-        <form action={loginWithGoogle}>
-          <input type="hidden" name="source" value="register" />
-          <SubmitButton
-            className="btn full secondary"
-            pendingLabel="Membuka Google…"
-          >
-            Lanjutkan dengan Google
-          </SubmitButton>
-        </form>
+        <GoogleSignInButton errorBase="/register" />
         <small>
           Sudah punya akun? <Link href="/login">Masuk</Link>
         </small>

@@ -94,42 +94,6 @@ export async function logout() {
   redirect("/");
 }
 
-export async function loginWithGoogle(form: FormData) {
-  // redirectTo WAJIB /auth/callback agar kode OAuth ditukar sesi di sana
-  // (pola yang sama dengan link verifikasi email). Mengarah ke root akan
-  // membuat user mendarat tanpa sesi.
-  const source = String(form.get("source") || "login");
-  const back = source === "register" ? "/register" : "/login";
-  const s = await supabaseServer();
-  const origin =
-    (await headers()).get("origin") ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000";
-  const { data, error } = await s.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${origin.replace(/\/+$/, "")}/auth/callback`,
-    },
-  });
-  if (error || !data?.url) {
-    // Degradasi anggun: provider belum diaktifkan di dashboard Supabase
-    // bukan crash — user diberi tahu jelas dan tetap bisa masuk pakai
-    // email/password. Jangan menebak penyebab di luar pesan Supabase.
-    const msg = `${error?.message ?? ""}`.toLowerCase();
-    if (
-      msg.includes("provider") ||
-      msg.includes("enabled") ||
-      msg.includes("unsupported") ||
-      msg.includes("disabled") ||
-      msg.includes("not configured")
-    ) {
-      redirect(`${back}?error=oauth_unavailable`);
-    }
-    redirect(`${back}?error=oauth_failed`);
-  }
-  redirect(data.url);
-}
-
 export async function requestPasswordReset(form: FormData) {
   const p = z
     .object({ email: z.string().email() })
