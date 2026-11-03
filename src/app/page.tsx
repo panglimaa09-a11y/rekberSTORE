@@ -119,11 +119,11 @@ export default function Home() {
       <nav className="lp-nav">
         <Link href="/" className="lp-brand" aria-label="RekberStore — Beranda">
           <Image
-            className="lp-brand-logo"
-            src="/brand/rekberstore-logo.png"
+            className="lp-brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
             alt="RekberStore"
-            width="1536"
-            height="1024"
+            width="2048"
+            height="682"
           />
         </Link>
 
@@ -353,9 +353,14 @@ export default function Home() {
       </section>
 
       <footer className="lp-footer">
-        <Link href="/" className="lp-brand">
-          <span className="lp-brand-mark">R</span>
-          REKBER<span>STORE</span>
+        <Link href="/" className="lp-brand" aria-label="RekberStore — Beranda">
+          <Image
+            className="lp-brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
+            alt="RekberStore"
+            width="2048"
+            height="682"
+          />
         </Link>
         <p>Secure Transaction Workspace</p>
         <div>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { login, loginWithGoogle } from "@/app/actions";
 import SubmitButton from "@/components/SubmitButton";
@@ -15,8 +16,14 @@ export default async function Login({
   return (
     <main className="auth">
       <section className="authbox">
-        <Link className="brand" href="/">
-          ◈ Rekber<span>STORE</span>
+        <Link className="brand" href="/" aria-label="RekberStore — Beranda">
+          <Image
+            className="brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
+            alt="RekberStore"
+            width="2048"
+            height="682"
+          />
         </Link>
         <small className="eyebrow">WELCOME BACK</small>
         <h1>Masuk ke akun</h1>

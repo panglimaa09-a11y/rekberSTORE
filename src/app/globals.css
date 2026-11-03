@@ -119,29 +119,6 @@
   font:800 19px Manrope,sans-serif;
   letter-spacing:-.8px;
 }
-.lp-brand>span:last-child{
-  background:linear-gradient(90deg,var(--lp-lilac),var(--lp-violet-deep));
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
-.lp-brand-mark{
-  display:grid;
-  place-items:center;
-  width:34px;
-  height:34px;
-  border-radius:9px;
-  background:linear-gradient(135deg,var(--lp-lilac),var(--lp-violet-deep));
-  color:#fff;
-  font-size:20px;
-  font-weight:800;
-}
-.lp-brand-logo{
-  display:block;
-  height:62px;
-  width:auto;
-  border-radius:10px;
-}
 .lp-nav-home{
   padding:10px 18px;
   border-radius:999px;
@@ -588,7 +565,6 @@
   .lp-hero-copy>p{font-size:12px}
   .lp-hero-actions{flex-direction:column;align-items:stretch}
   .lp-button-primary,.lp-button-secondary{width:100%}
-  .lp-brand-logo{height:46px}
   .lp-strip{grid-template-columns:1fr;gap:16px;padding:24px 13px}
   .lp-strip-sep{display:none}
   .lp-section,.lp-workflow,.lp-faq{padding:75px 20px}
@@ -955,4 +931,22 @@
 }
 @media(max-width:600px){
   .admin-hub .rekber-quick-links>a{flex-direction:row;align-items:center}
+}
+
+/* Logo horizontal RekberSTORE (public/brand/rekberstore-logo-horizontal.png,
+   2048x682, latar hitam pekat tanpa transparansi): mix-blend-mode:screen
+   membuat piksel hitam menyatu dengan permukaan gelap situs sehingga
+   tidak tampak kotak hitam; file gambar tidak diubah. Kelas per
+   penempatan — ukuran mengikuti wadahnya, teks/link/rute tidak berubah. */
+.brand-logo-horizontal{display:block;width:auto;height:auto;mix-blend-mode:screen}
+.lp-brand .brand-logo-horizontal{height:40px;max-width:230px}
+.side .brand .brand-logo-horizontal{width:168px;max-width:100%}
+.authbox .brand .brand-logo-horizontal{width:210px;max-width:100%}
+.lp-footer .brand-logo-horizontal{height:38px;max-width:190px}
+@media(max-width:650px){
+  .lp-brand .brand-logo-horizontal{height:32px;max-width:180px}
+}
+@media(max-width:600px){
+  .side .brand .brand-logo-horizontal{width:140px}
+  .authbox .brand .brand-logo-horizontal{width:180px}
 }

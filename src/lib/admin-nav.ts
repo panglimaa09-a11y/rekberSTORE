@@ -5,9 +5,8 @@
  * server/client: boleh diimpor komponen mana pun.
  *
  * Glyph dipilih BERBEDA untuk tiap item dan umum dirender font
- * (tanpa emoji — scanner melarang ikon emoji). Glyph ◈ hanya
- * dipakai pada lockup brand "RekberSTORE" di bar navigasi, bukan
- * sebagai ikon item, agar tidak dobel dengan item lain.
+ * (tanpa emoji — scanner melarang ikon emoji). Lockup brand di bar
+ * navigasi memakai gambar logo horizontal RekberSTORE, bukan glyph.
  */
 
 export type AdminQueueKey =

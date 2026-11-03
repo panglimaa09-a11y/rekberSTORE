@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { updatePassword } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -23,8 +24,14 @@ export default async function ResetPassword({
   return (
     <main className="auth">
       <section className="authbox">
-        <Link className="brand" href="/">
-          ◈ Rekber<span>STORE</span>
+        <Link className="brand" href="/" aria-label="RekberStore — Beranda">
+          <Image
+            className="brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
+            alt="RekberStore"
+            width="2048"
+            height="682"
+          />
         </Link>
         <small className="eyebrow">RESET PASSWORD</small>
         <h1>Buat password baru</h1>

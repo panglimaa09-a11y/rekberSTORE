@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logout, verifyMfaChallenge } from "@/app/actions";
@@ -30,8 +31,14 @@ export default async function MfaChallenge({
   return (
     <main className="auth">
       <section className="authbox">
-        <Link className="brand" href="/">
-          ◈ Rekber<span>STORE</span>
+        <Link className="brand" href="/" aria-label="RekberStore — Beranda">
+          <Image
+            className="brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
+            alt="RekberStore"
+            width="2048"
+            height="682"
+          />
         </Link>
         <small className="eyebrow">VERIFIKASI DUA LANGKAH</small>
         <h1>Masukkan kode 2FA</h1>

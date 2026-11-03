@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, useState, type ReactNode } from "react";
@@ -101,8 +102,14 @@ export default function DashboardNav({
   return (
     <>
       <div className="side-bar">
-        <Link className="brand" href="/" onClick={close}>
-          ◈ Rekber<span>STORE</span>
+        <Link className="brand" href="/" onClick={close} aria-label="RekberStore — Beranda">
+          <Image
+            className="brand-logo-horizontal"
+            src="/brand/rekberstore-logo-horizontal.png"
+            alt="RekberStore"
+            width="2048"
+            height="682"
+          />
         </Link>
         <button
           type="button"
