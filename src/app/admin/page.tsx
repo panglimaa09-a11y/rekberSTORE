@@ -2,110 +2,30 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
+import { adminHubGroups, type AdminQueueKey } from "@/lib/admin-nav";
+import {
+  loadAdminQueueCounts,
+  type AdminQueueCounts,
+} from "@/lib/admin-view";
 
-type HubLink = {
-  href: string;
-  icon: string;
-  label: string;
-  desc: string;
+const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
+  disputes: "disputes_waiting",
+  cases: "cases_open",
+  userKyc: "user_kyc_pending",
+  topup: "topup_pending",
+  qr: "pending_qr",
+  kyc: "pending_kyc",
 };
 
-const staffGroups: { heading: string; links: HubLink[] }[] = [
-  {
-    heading: "PENANGANAN",
-    links: [
-      {
-        href: "/admin/sengketa",
-        icon: "◎",
-        label: "Sengketa",
-        desc: "Putusan sengketa menunggu",
-      },
-      {
-        href: "/admin/pengawasan",
-        icon: "⌕",
-        label: "Pengawasan",
-        desc: "Seluruh transaksi tercatat",
-      },
-      {
-        href: "/admin/kasus",
-        icon: "▨",
-        label: "Kasus Eskalasi",
-        desc: "Laporan ke tim penindakan",
-      },
-    ],
-  },
-  {
-    heading: "OPERASIONAL",
-    links: [
-      {
-        href: "/admin/moderasi",
-        icon: "▤",
-        label: "Moderasi Listing",
-        desc: "Jeda atau aktifkan listing",
-      },
-      {
-        href: "/admin/topup",
-        icon: "◈",
-        label: "Pesanan Top Up",
-        desc: "Daftar pesanan, read-only",
-      },
-      {
-        href: "/admin/audit",
-        icon: "▣",
-        label: "Log Audit",
-        desc: "Akses berkas dan bundel bukti",
-      },
-    ],
-  },
-  {
-    heading: "VERIFIKASI",
-    links: [
-      {
-        href: "/admin/kyc-pengguna",
-        icon: "◍",
-        label: "KYC Pengguna",
-        desc: "Tinjau KYC buyer dan seller",
-      },
-      {
-        href: "/admin/profil-bisnis",
-        icon: "◉",
-        label: "Profil Bisnis",
-        desc: "QR bisnis dan dokumen Anda",
-      },
-    ],
-  },
-];
-
-const superAdminGroups: { heading: string; links: HubLink[] }[] = [
-  {
-    heading: "SUPER ADMIN",
-    links: [
-      {
-        href: "/admin/daftar-admin",
-        icon: "＋",
-        label: "Daftarkan Admin",
-        desc: "Rekber terpilih oleh Tuan",
-      },
-      {
-        href: "/admin/tinjauan-qr",
-        icon: "▦",
-        label: "Tinjauan QR",
-        desc: "Setujui QR bisnis admin",
-      },
-      {
-        href: "/admin/tinjauan-kyc",
-        icon: "◐",
-        label: "Tinjauan KYC",
-        desc: "Setujui KYC admin",
-      },
-    ],
-  },
-];
-
 /**
- * Hub panel admin: kartu langsung ke halaman tiap fungsi. Tanpa
- * metrik, tabel, atau empty-state — tiap fungsi punya halamannya
+ * Hub panel admin: kartu langsung ke halaman tiap fungsi. Kartu
+ * antrean membawa badge angka NYATA dari RPC
+ * get_rekber_admin_queue_counts (migrasi 20261102080007); bila
+ * migrasi belum dijalankan, badge menampilkan "—", bukan angka
+ * karangan. Tanpa tabel metrik — tiap fungsi punya halamannya
  * sendiri. Kartu super-admin hanya tampil untuk super-admin.
+ * Satu-satunya jalan kembali ke dashboard adalah tautan di sidebar
+ * (tombol header ganda dihapus).
  */
 export default async function AdminHub() {
   const db = await supabaseServer();
@@ -116,14 +36,15 @@ export default async function AdminHub() {
 
   const roles = await getMyRoles(db, user.id);
   const groups = roles.isSuperAdmin
-    ? [...staffGroups, ...superAdminGroups]
-    : staffGroups;
+    ? adminHubGroups
+    : adminHubGroups.slice(0, 3);
+
+  const counts = await loadAdminQueueCounts(db, roles.isSuperAdmin);
 
   return (
-    <section className="dashmain">
+    <section className="dashmain admin-hub">
       <header>
         <div>
-          <small className="eyebrow">PANEL ADMIN</small>
           <h1>Panel Admin</h1>
           <p>
             Admin di sini adalah rekber terpilih yang memakai layanan
@@ -131,22 +52,26 @@ export default async function AdminHub() {
             {user.email ?? "Anda"}.
           </p>
         </div>
-        <Link className="btn secondary" href="/dashboard">
-          Kembali ke dashboard
-        </Link>
       </header>
 
       {groups.map((group) => (
         <section key={group.heading} className="hub-group">
           <small>{group.heading}</small>
           <div className="rekber-quick-links">
-            {group.links.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <b>{link.icon}</b>
-                <span>
-                  {link.label}
-                  <small>{link.desc}</small>
+            {group.entries.map((entry) => (
+              <Link key={entry.href} href={entry.href}>
+                <b>{entry.icon}</b>
+                <span className="hub-label">
+                  {entry.label}
+                  <small>{entry.desc}</small>
                 </span>
+                {entry.queueKey && (
+                  <span className="hub-count">
+                    {counts
+                      ? String(counts[queueField[entry.queueKey]])
+                      : "—"}
+                  </span>
+                )}
               </Link>
             ))}
           </div>

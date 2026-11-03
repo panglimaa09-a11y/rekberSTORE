@@ -60,7 +60,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <main className="dash app-bg">
+    <main className="dash app-bg admin-shell">
       <aside className="side">
         <Suspense fallback={null}>
           <AdminNav

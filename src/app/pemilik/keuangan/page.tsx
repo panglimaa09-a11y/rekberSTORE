@@ -29,7 +29,7 @@ export default async function OwnerFinance() {
   if (!user) redirect("/login");
 
   const roles = await getMyRoles(db, user.id);
-  if (!roles.isSuperAdmin) return <AdminDenied />;
+  if (!roles.isSuperAdmin) return <AdminDenied variant="pemilik" />;
 
   const pakasirConfigured = isPakasirConfigured();
 

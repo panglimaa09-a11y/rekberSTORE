@@ -56,13 +56,13 @@ export default async function OwnerLayout({
         <p>
           <Link href="/dashboard">Kembali ke dashboard</Link>
         </p>
-        <AdminDenied />
+        <AdminDenied variant="pemilik" />
       </main>
     );
   }
 
   return (
-    <main className="dash app-bg">
+    <main className="dash app-bg admin-shell">
       <aside className="side">
         <Suspense fallback={null}>
           <OwnerNav

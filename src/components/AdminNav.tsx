@@ -3,26 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useState, type ReactNode } from "react";
-
-type NavLink = { href: string; label: string };
-
-const staffLinks: NavLink[] = [
-  { href: "/admin", label: "▨ Panel Admin" },
-  { href: "/admin/sengketa", label: "◎ Sengketa" },
-  { href: "/admin/pengawasan", label: "⌕ Pengawasan" },
-  { href: "/admin/moderasi", label: "▤ Moderasi Listing" },
-  { href: "/admin/topup", label: "◈ Pesanan Top Up" },
-  { href: "/admin/kyc-pengguna", label: "◍ KYC Pengguna" },
-  { href: "/admin/kasus", label: "▨ Kasus Eskalasi" },
-  { href: "/admin/audit", label: "▣ Log Audit" },
-  { href: "/admin/profil-bisnis", label: "◉ Profil Bisnis" },
-];
-
-const superAdminLinks: NavLink[] = [
-  { href: "/admin/daftar-admin", label: "＋ Daftarkan Admin" },
-  { href: "/admin/tinjauan-qr", label: "▦ Tinjauan QR" },
-  { href: "/admin/tinjauan-kyc", label: "◐ Tinjauan KYC" },
-];
+import {
+  adminHubEntry,
+  adminStaffEntries,
+  adminSuperEntries,
+  type AdminNavEntry,
+} from "@/lib/admin-nav";
 
 function isSelected(pathname: string, href: string) {
   if (href === "/admin") return pathname === href;
@@ -33,7 +19,8 @@ function isSelected(pathname: string, href: string) {
  * Navigasi area admin (/admin/*) — shell SENDIRI, terpisah dari
  * navigasi dashboard user. Pola mobile sama: bar ramping + menu
  * lipat hamburger, menutup otomatis setelah navigasi atau saat
- * tombol Escape ditekan.
+ * tombol Escape ditekan. Daftar tautan berasal dari satu sumber
+ * kebenaran di src/lib/admin-nav.ts (dipakai bersama hub /admin).
  */
 export default function AdminNav({
   logoutForm,
@@ -46,10 +33,13 @@ export default function AdminNav({
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
-  const groups: { heading: string; links: NavLink[] }[] = [
-    { heading: "PANEL ADMIN", links: staffLinks },
+  const groups: { heading: string; links: AdminNavEntry[] }[] = [
+    {
+      heading: "MENU",
+      links: [adminHubEntry, ...adminStaffEntries],
+    },
     ...(isSuperAdmin
-      ? [{ heading: "SUPER ADMIN", links: superAdminLinks }]
+      ? [{ heading: "SUPER ADMIN", links: adminSuperEntries }]
       : []),
   ];
 
@@ -90,7 +80,7 @@ export default function AdminNav({
                   isSelected(pathname, link.href) ? "selected" : undefined
                 }
               >
-                {link.label}
+                {`${link.icon} ${link.label}`}
               </Link>
             ))}
           </Fragment>

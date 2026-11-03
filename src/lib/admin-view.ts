@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingRpcError } from "@/lib/rekber-stages";
 
 /**
  * Helper tampilan bersama halaman-halaman panel admin (/admin/*).
@@ -69,4 +70,53 @@ export function displayNameFor(
   if (uid === selfId) return "Anda";
   const name = nameMap.get(uid);
   return name ? name : `ID ${uid.slice(0, 8)}…`;
+}
+
+/** Angka antrean hub panel admin dari RPC get_rekber_admin_queue_counts. */
+export type AdminQueueCounts = {
+  disputes_waiting: number;
+  cases_open: number;
+  user_kyc_pending: number;
+  topup_pending: number;
+  pending_qr: number;
+  pending_kyc: number;
+};
+
+/**
+ * Baca angka antrean untuk badge hub /admin. Gagal baca apa pun
+ * (termasuk migrasi 20261102080007 belum dijalankan) = null; pemanggil
+ * menampilkan "—", bukan angka karangan. Kegagalan selain RPC belum
+ * ada dicatat ke log server agar dapat ditelusuri.
+ */
+export async function loadAdminQueueCounts(
+  db: SupabaseClient,
+  isSuperAdmin: boolean
+): Promise<AdminQueueCounts | null> {
+  try {
+    const { data, error } = await db.rpc(
+      "get_rekber_admin_queue_counts"
+    );
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+    const counts: AdminQueueCounts = {
+      disputes_waiting: Number(row.disputes_waiting ?? 0),
+      cases_open: Number(row.cases_open ?? 0),
+      user_kyc_pending: Number(row.user_kyc_pending ?? 0),
+      topup_pending: Number(row.topup_pending ?? 0),
+      pending_qr: isSuperAdmin ? Number(row.pending_qr ?? 0) : 0,
+      pending_kyc: isSuperAdmin ? Number(row.pending_kyc ?? 0) : 0,
+    };
+    return counts;
+  } catch (error) {
+    if (
+      !isMissingRpcError(error as { code?: string; message?: string })
+    ) {
+      console.error(
+        "[loadAdminQueueCounts] gagal baca antrean:",
+        error
+      );
+    }
+    return null;
+  }
 }

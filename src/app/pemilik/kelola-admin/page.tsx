@@ -61,7 +61,7 @@ export default async function OwnerManageAdmins({
   if (!user) redirect("/login");
 
   const roles = await getMyRoles(db, user.id);
-  if (!roles.isSuperAdmin) return <AdminDenied />;
+  if (!roles.isSuperAdmin) return <AdminDenied variant="pemilik" />;
 
   let staffList: {
     user_id: string;
