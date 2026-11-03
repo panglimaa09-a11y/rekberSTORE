@@ -43,6 +43,14 @@ const config: NextConfig = {
         destination: "/pemilik/kelola-admin",
         permanent: false,
       },
+      // Pesanan Top Up hanya super admin (keputusan Tuan 3 Nov 2026):
+      // halaman /admin/topup dihapus, fungsinya hanya di
+      // /pemilik/keuangan.
+      {
+        source: "/admin/topup",
+        destination: "/pemilik/keuangan",
+        permanent: false,
+      },
     ];
   },
 };

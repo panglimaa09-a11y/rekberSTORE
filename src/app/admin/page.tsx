@@ -15,7 +15,6 @@ const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
   disputes: "disputes_waiting",
   cases: "cases_open",
   userKyc: "user_kyc_pending",
-  topup: "topup_pending",
   qr: "pending_qr",
 };
 

@@ -14,7 +14,6 @@ export type AdminQueueKey =
   | "disputes"
   | "cases"
   | "userKyc"
-  | "topup"
   | "qr";
 
 export type AdminNavEntry = {
@@ -64,13 +63,6 @@ export const adminHubGroups: AdminNavGroup[] = [
         icon: "▤",
         label: "Moderasi Listing",
         desc: "Jeda atau aktifkan listing",
-      },
-      {
-        href: "/admin/topup",
-        icon: "◆",
-        label: "Pesanan Top Up",
-        desc: "Daftar pesanan, read-only",
-        queueKey: "topup",
       },
       {
         href: "/admin/audit",

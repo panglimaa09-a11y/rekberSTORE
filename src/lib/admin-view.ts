@@ -77,7 +77,6 @@ export type AdminQueueCounts = {
   disputes_waiting: number;
   cases_open: number;
   user_kyc_pending: number;
-  topup_pending: number;
   pending_qr: number;
 };
 
@@ -102,7 +101,6 @@ export async function loadAdminQueueCounts(
       disputes_waiting: Number(row.disputes_waiting ?? 0),
       cases_open: Number(row.cases_open ?? 0),
       user_kyc_pending: Number(row.user_kyc_pending ?? 0),
-      topup_pending: Number(row.topup_pending ?? 0),
       pending_qr: isSuperAdmin ? Number(row.pending_qr ?? 0) : 0,
     };
     return counts;
