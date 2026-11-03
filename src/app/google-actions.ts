@@ -1,6 +1,6 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -14,9 +14,12 @@ export type GoogleSignInPreparation =
   | { configured: true; clientId: string; nonce: string }
   | { configured: false };
 
-// Menerbitkan nonce acak dan menyimpannya di cookie httpOnly sekali
-// pakai (5 menit). Nonce yang sama dikirim ke Google Identity Services;
-// Supabase membandingkan klaim nonce di dalam ID token dengan nilai ini.
+// Menerbitkan nonce acak dan menyimpannya (MENTAH) di cookie httpOnly
+// sekali pakai (5 menit). Ke Google Identity Services dikirim bentuk
+// SHA-256 hex dari nonce itu — Google menuliskan nilai hash tersebut
+// sebagai klaim nonce di dalam ID token. Supabase menerima nonce mentah
+// dari cookie dan membandingkan hash-nya dengan klaim di token; mengirim
+// nonce mentah ke Google menyebabkan "invalid nonce: Nonces mismatch".
 export async function prepareGoogleSignIn(): Promise<GoogleSignInPreparation> {
   const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "").trim();
   if (!clientId) {
@@ -31,7 +34,8 @@ export async function prepareGoogleSignIn(): Promise<GoogleSignInPreparation> {
     path: "/",
     maxAge: 300,
   });
-  return { configured: true, clientId, nonce };
+  const nonceHash = createHash("sha256").update(nonce).digest("hex");
+  return { configured: true, clientId, nonce: nonceHash };
 }
 
 // Menukar ID token Google menjadi sesi Supabase. WAJIB ada nonce cookie
@@ -65,7 +69,9 @@ export async function loginWithGoogleIdToken(
   if (error) {
     // Jangan bocorkan detail error mentah ke client; penyebab umum
     // (token kedaluwarsa, nonce tak cocok) cukup diwakili banner umum.
-    console.error("Login Google langsung gagal");
+    // Status + pesan dicatat di log server agar kegagalan berikutnya
+    // bisa dibaca dari log Vercel.
+    console.error("Login Google langsung gagal", error.status, error.message);
     return { ok: false };
   }
   return { ok: true };
