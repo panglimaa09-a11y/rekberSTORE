@@ -119,7 +119,7 @@ export default function Home() {
       <nav className="lp-nav">
         <Link href="/" className="lp-brand" aria-label="RekberStore — Beranda">
           <Image
-            className="lp-brand-logo-horizontal"
+            className="brand-logo-horizontal"
             src="/brand/rekberstore-logo-horizontal.png"
             alt="RekberStore"
             width="2048"
@@ -355,7 +355,7 @@ export default function Home() {
       <footer className="lp-footer">
         <Link href="/" className="lp-brand" aria-label="RekberStore — Beranda">
           <Image
-            className="lp-brand-logo-horizontal"
+            className="brand-logo-horizontal"
             src="/brand/rekberstore-logo-horizontal.png"
             alt="RekberStore"
             width="2048"

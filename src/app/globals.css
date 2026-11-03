@@ -938,13 +938,12 @@
    membuat piksel hitam menyatu dengan permukaan gelap situs sehingga
    tidak tampak kotak hitam; file gambar tidak diubah. Kelas per
    penempatan — ukuran mengikuti wadahnya, teks/link/rute tidak berubah. */
-.brand-logo-horizontal{display:block;width:auto;height:auto;mix-blend-mode:screen}
-.lp-brand .brand-logo-horizontal{height:40px;max-width:230px}
-.side .brand .brand-logo-horizontal{width:168px;max-width:100%}
-.authbox .brand .brand-logo-horizontal{width:210px;max-width:100%}
+.brand-logo-horizontal{display:block;width:auto;height:40px;max-width:230px;mix-blend-mode:screen}
+.side .brand .brand-logo-horizontal{width:168px;max-width:100%;height:auto}
+.authbox .brand .brand-logo-horizontal{width:210px;max-width:100%;height:auto}
 .lp-footer .brand-logo-horizontal{height:38px;max-width:190px}
 @media(max-width:650px){
-  .lp-brand .brand-logo-horizontal{height:32px;max-width:180px}
+  .brand-logo-horizontal{height:32px;max-width:180px}
 }
 @media(max-width:600px){
   .side .brand .brand-logo-horizontal{width:140px}
