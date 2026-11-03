@@ -7,16 +7,25 @@ import { isMissingRpcError, rpcErrorToken } from "@/lib/rekber-stages";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
-function daftarAdminUrl(notice: string) {
-  return `/admin/daftar-admin?notice=${notice}`;
+/**
+ * Tujuan kembali setelah aksi. Formulir dari shell pemilik mengirim
+ * return_to=/pemilik/kelola-admin; formulir /admin tidak mengirimnya
+ * dan kembali ke URL lama. Hanya nilai persis dalam allowlist yang
+ * diterima — nilai lain diabaikan demi keamanan redirect.
+ */
+const OWNER_MANAGE_URL = "/pemilik/kelola-admin";
+
+function returnBase(
+  form: FormData,
+  allowed: string[],
+  fallback: string
+): string {
+  const value = String(form.get("return_to") || "");
+  return allowed.includes(value) ? value : fallback;
 }
 
-function tinjauanQrUrl(notice: string) {
-  return `/admin/tinjauan-qr?notice=${notice}`;
-}
-
-function tinjauanKycUrl(notice: string) {
-  return `/admin/tinjauan-kyc?notice=${notice}`;
+function withNotice(base: string, notice: string) {
+  return `${base}?notice=${notice}`;
 }
 
 function moderasiUrl(notice: string) {
@@ -41,42 +50,54 @@ async function requireUser() {
  */
 export async function appointRekberAdmin(form: FormData) {
   const email = String(form.get("email") || "").trim().toLowerCase();
+  const base = returnBase(
+    form,
+    ["/admin/daftar-admin", OWNER_MANAGE_URL],
+    "/admin/daftar-admin"
+  );
 
   if (!email.includes("@") || !email.includes(".") || email.length > 254) {
-    redirect(daftarAdminUrl("appoint_invalid"));
+    redirect(withNotice(base, "appoint_invalid"));
   }
 
   const db = await requireUser();
   const { error } = await db.rpc("appoint_rekber_admin", { p_email: email });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(daftarAdminUrl("stage_unavailable"));
+    if (isMissingRpcError(error)) redirect(withNotice(base, "stage_unavailable"));
     const token = rpcErrorToken(error);
-    if (token === "USER_NOT_FOUND") redirect(daftarAdminUrl("appoint_not_found"));
-    redirect(daftarAdminUrl("appoint_error"));
+    if (token === "USER_NOT_FOUND") redirect(withNotice(base, "appoint_not_found"));
+    redirect(withNotice(base, "appoint_error"));
   }
 
   revalidatePath("/admin/daftar-admin");
-  redirect(daftarAdminUrl("appointed"));
+  revalidatePath(OWNER_MANAGE_URL);
+  redirect(withNotice(base, "appointed"));
 }
 
 export async function revokeRekberAdmin(form: FormData) {
   const userId = String(form.get("user_id") || "").trim();
+  const base = returnBase(
+    form,
+    ["/admin/daftar-admin", OWNER_MANAGE_URL],
+    "/admin/daftar-admin"
+  );
 
   if (!UUID_RE.test(userId)) {
-    redirect(daftarAdminUrl("invalid"));
+    redirect(withNotice(base, "invalid"));
   }
 
   const db = await requireUser();
   const { error } = await db.rpc("revoke_rekber_admin", { p_user_id: userId });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(daftarAdminUrl("stage_unavailable"));
-    redirect(daftarAdminUrl("revoke_error"));
+    if (isMissingRpcError(error)) redirect(withNotice(base, "stage_unavailable"));
+    redirect(withNotice(base, "revoke_error"));
   }
 
   revalidatePath("/admin/daftar-admin");
-  redirect(daftarAdminUrl("revoked"));
+  revalidatePath(OWNER_MANAGE_URL);
+  redirect(withNotice(base, "revoked"));
 }
 
 /**
@@ -119,13 +140,18 @@ export async function reviewQrProfile(form: FormData) {
   const profileId = String(form.get("profile_id") || "").trim();
   const decision = String(form.get("decision") || "");
   const note = String(form.get("note") || "").trim();
+  const base = returnBase(
+    form,
+    ["/admin/tinjauan-qr", OWNER_MANAGE_URL],
+    "/admin/tinjauan-qr"
+  );
 
   if (
     !UUID_RE.test(profileId) ||
     !["approved", "rejected"].includes(decision) ||
     note.length > 500
   ) {
-    redirect(tinjauanQrUrl("review_invalid"));
+    redirect(withNotice(base, "review_invalid"));
   }
 
   const db = await requireUser();
@@ -136,12 +162,13 @@ export async function reviewQrProfile(form: FormData) {
   });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(tinjauanQrUrl("stage_unavailable"));
-    redirect(tinjauanQrUrl("review_error"));
+    if (isMissingRpcError(error)) redirect(withNotice(base, "stage_unavailable"));
+    redirect(withNotice(base, "review_error"));
   }
 
   revalidatePath("/admin/tinjauan-qr");
-  redirect(tinjauanQrUrl("qr_reviewed"));
+  revalidatePath(OWNER_MANAGE_URL);
+  redirect(withNotice(base, "qr_reviewed"));
 }
 
 /** Tinjau pengajuan KYC oleh super_admin. */
@@ -149,13 +176,18 @@ export async function reviewKycSubmission(form: FormData) {
   const submissionId = String(form.get("submission_id") || "").trim();
   const decision = String(form.get("decision") || "");
   const note = String(form.get("note") || "").trim();
+  const base = returnBase(
+    form,
+    ["/admin/tinjauan-kyc", OWNER_MANAGE_URL],
+    "/admin/tinjauan-kyc"
+  );
 
   if (
     !UUID_RE.test(submissionId) ||
     !["approved", "rejected", "suspended"].includes(decision) ||
     note.length > 500
   ) {
-    redirect(tinjauanKycUrl("review_invalid"));
+    redirect(withNotice(base, "review_invalid"));
   }
 
   const db = await requireUser();
@@ -166,12 +198,13 @@ export async function reviewKycSubmission(form: FormData) {
   });
 
   if (error) {
-    if (isMissingRpcError(error)) redirect(tinjauanKycUrl("stage_unavailable"));
-    redirect(tinjauanKycUrl("review_error"));
+    if (isMissingRpcError(error)) redirect(withNotice(base, "stage_unavailable"));
+    redirect(withNotice(base, "review_error"));
   }
 
   revalidatePath("/admin/tinjauan-kyc");
-  redirect(tinjauanKycUrl("kyc_reviewed"));
+  revalidatePath(OWNER_MANAGE_URL);
+  redirect(withNotice(base, "kyc_reviewed"));
 }
 
 /**

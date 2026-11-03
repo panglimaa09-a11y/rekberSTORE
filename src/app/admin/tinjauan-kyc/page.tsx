@@ -10,6 +10,7 @@ import {
   displayNameFor,
   loadDisplayNames,
 } from "@/lib/admin-view";
+import { loadKycReviewQueue } from "@/lib/admin-review";
 
 const notices: Record<string, string> = {
   kyc_reviewed: "Pengajuan KYC sudah ditinjau.",
@@ -39,44 +40,7 @@ export default async function AdminKycReview({
   const roles = await getMyRoles(db, user.id);
   if (!roles.isSuperAdmin) return <AdminDenied />;
 
-  let kycQueue: {
-    id: string;
-    admin_user_id: string;
-    legal_name: string;
-    phone_e164: string;
-    identity_document_type: string;
-    identity_document_object_path: string;
-    selfie_object_path: string;
-    status: string;
-    submitted_at: string;
-  }[] = [];
-  try {
-    const { data, error } = await db
-      .from("admin_kyc_submissions")
-      .select(
-        "id,admin_user_id,legal_name,phone_e164,identity_document_type,identity_document_object_path,selfie_object_path,status,submitted_at"
-      )
-      .eq("status", "pending_review")
-      .order("submitted_at", { ascending: true })
-      .limit(20);
-    if (!error) kycQueue = data ?? [];
-  } catch {
-    kycQueue = [];
-  }
-
-  if (kycQueue.length > 0) {
-    try {
-      await db.rpc("log_rekber_access", {
-        p_transaction_id: null,
-        p_action: "review_queue_view",
-        p_details: {
-          admin_kyc_ids: kycQueue.map((k) => k.id),
-        },
-      });
-    } catch {
-      // Pencatatan gagal — antrean tetap tampil.
-    }
-  }
+  const kycQueue = await loadKycReviewQueue(db);
 
   const nameMap = await loadDisplayNames(
     db,

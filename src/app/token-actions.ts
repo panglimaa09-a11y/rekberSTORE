@@ -9,15 +9,10 @@ import {
   getPakasirTransactionStatus,
 } from "@/lib/pakasir";
 import { isMissingRpcError as isMissingMigration } from "@/lib/rekber-stages";
-
-const packages: Record<string, { tokens: number; price: number }> = {
-  "1": { tokens: 1, price: 5000 },
-  "2": { tokens: 2, price: 10000 },
-  "4": { tokens: 4, price: 15000 }
-};
+import { tokenPackageByTokens } from "@/lib/token-packages";
 
 export async function createTokenTopupOrder(form: FormData) {
-  const selected = packages[String(form.get("package_tokens") || "")];
+  const selected = tokenPackageByTokens(String(form.get("package_tokens") || ""));
 
   if (!selected) {
     redirect("/dashboard/topup?error=invalid_package");

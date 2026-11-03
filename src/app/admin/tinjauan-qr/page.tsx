@@ -10,6 +10,7 @@ import {
   displayNameFor,
   loadDisplayNames,
 } from "@/lib/admin-view";
+import { loadQrReviewQueue } from "@/lib/admin-review";
 
 const notices: Record<string, string> = {
   qr_reviewed: "Profil QR bisnis sudah ditinjau.",
@@ -40,59 +41,7 @@ export default async function AdminQrReview({
   const roles = await getMyRoles(db, user.id);
   if (!roles.isSuperAdmin) return <AdminDenied />;
 
-  let qrQueue: {
-    id: string;
-    admin_user_id: string;
-    merchant_display_name: string;
-    merchant_provider: string;
-    qr_image_object_path: string;
-    ownership_evidence_object_path: string | null;
-    status: string;
-    submitted_at: string;
-    signedUrl: string | null;
-  }[] = [];
-  try {
-    const { data, error } = await db
-      .from("admin_qr_profiles")
-      .select(
-        "id,admin_user_id,merchant_display_name,merchant_provider,qr_image_object_path,ownership_evidence_object_path,status,submitted_at"
-      )
-      .eq("status", "pending_review")
-      .order("submitted_at", { ascending: true })
-      .limit(20);
-    if (!error && data) {
-      qrQueue = await Promise.all(
-        data.map(async (row) => {
-          let signedUrl: string | null = null;
-          try {
-            const { data: signed } = await db.storage
-              .from("admin-private-documents")
-              .createSignedUrl(row.qr_image_object_path, 3600);
-            signedUrl = signed?.signedUrl ?? null;
-          } catch {
-            signedUrl = null;
-          }
-          return { ...row, signedUrl };
-        })
-      );
-    }
-  } catch {
-    qrQueue = [];
-  }
-
-  if (qrQueue.length > 0) {
-    try {
-      await db.rpc("log_rekber_access", {
-        p_transaction_id: null,
-        p_action: "review_queue_view",
-        p_details: {
-          qr_ids: qrQueue.map((q) => q.id),
-        },
-      });
-    } catch {
-      // Pencatatan gagal — antrean tetap tampil.
-    }
-  }
+  const qrQueue = await loadQrReviewQueue(db);
 
   const nameMap = await loadDisplayNames(
     db,

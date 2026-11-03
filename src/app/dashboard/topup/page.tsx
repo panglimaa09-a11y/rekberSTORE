@@ -7,13 +7,10 @@ import {
   createTopupPaymentLink,
 } from "@/app/token-actions";
 import { isPakasirConfigured } from "@/lib/pakasir";
+import { TOKEN_PACKAGES } from "@/lib/token-packages";
 import SubmitButton from "@/components/SubmitButton";
 
-const packages = [
-  { tokens: 1, price: 5000, name: "Starter", detail: "Paket awal" },
-  { tokens: 2, price: 10000, name: "Reguler", detail: "Satu biaya layanan website" },
-  { tokens: 4, price: 15000, name: "Hemat", detail: "Dua biaya layanan website" }
-];
+const packages = TOKEN_PACKAGES;
 
 const money = (value: number) =>
   new Intl.NumberFormat("id-ID", {

@@ -44,7 +44,8 @@ export async function middleware(req: NextRequest) {
 
   if (
     (req.nextUrl.pathname.startsWith("/dashboard") ||
-      req.nextUrl.pathname.startsWith("/admin")) &&
+      req.nextUrl.pathname.startsWith("/admin") ||
+      req.nextUrl.pathname.startsWith("/pemilik")) &&
     !user
   ) {
     const target = req.nextUrl.clone();
@@ -56,5 +57,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"]
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/pemilik/:path*"]
 };

@@ -50,7 +50,7 @@ export default async function AdminLayout({
 
   if (!isStaff) {
     return (
-      <main className="dashmain">
+      <main className="dashmain app-bg">
         <p>
           <Link href="/dashboard">Kembali ke dashboard</Link>
         </p>
@@ -60,7 +60,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <main className="dash">
+    <main className="dash app-bg">
       <aside className="side">
         <Suspense fallback={null}>
           <AdminNav

@@ -181,16 +181,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="lp-hero-logo-wrap">
-          <Image
-            className="lp-hero-logo"
-            src="/brand/rekberstore-logo.png"
-            alt="RekberStore"
-            width="1536"
-            height="1024"
-            priority
-          />
-        </div>
       </section>
 
       <section className="lp-strip" aria-label="Tiga langkah transaksi">

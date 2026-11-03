@@ -52,7 +52,7 @@ export default async function DashboardLayout({
   if (needsChallenge) redirect("/mfa-challenge");
 
   return (
-    <main className="dash">
+    <main className="dash app-bg">
       <aside className="side">
         <Suspense fallback={null}>
           <DashboardNav
