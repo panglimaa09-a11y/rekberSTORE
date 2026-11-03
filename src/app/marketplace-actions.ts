@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getUserKycStatus, kycGateErrorKey } from "@/lib/kyc";
+import { getMyRoles } from "@/lib/supabase/roles";
 import {
   LISTING_IMAGE_BUCKET,
   listingImagePath,
@@ -47,10 +48,15 @@ export async function createListing(form: FormData) {
     redirect("/dashboard/sell?error=image");
   }
 
-  // Gerbang KYC: seller wajib KYC terverifikasi sebelum pasang penawaran.
-  const sellerKyc = await getUserKycStatus(db, user.id);
-  if (sellerKyc !== "approved") {
-    redirect(`/dashboard/sell?error=${kycGateErrorKey(sellerKyc)}`);
+  // Gerbang KYC: seller wajib KYC terverifikasi sebelum pasang
+  // penawaran. Staf (admin/super_admin, rekber terpilih) memakai URL
+  // sosmed, bukan KYC dokumen — gerbang dilewati untuk mereka.
+  const sellerRoles = await getMyRoles(db, user.id);
+  if (!sellerRoles.isStaff) {
+    const sellerKyc = await getUserKycStatus(db, user.id);
+    if (sellerKyc !== "approved") {
+      redirect(`/dashboard/sell?error=${kycGateErrorKey(sellerKyc)}`);
+    }
   }
 
   // Unggah dulu, baru simpan listing: gagal unggah = listing tidak dibuat.
@@ -112,10 +118,15 @@ export async function requestTransaction(form: FormData) {
 
   if (!user) redirect("/login");
 
-  // Gerbang KYC: buyer wajib KYC terverifikasi sebelum mengajukan transaksi.
-  const buyerKyc = await getUserKycStatus(db, user.id);
-  if (buyerKyc !== "approved") {
-    redirect(`/dashboard/browse?error=${kycGateErrorKey(buyerKyc)}`);
+  // Gerbang KYC: buyer wajib KYC terverifikasi sebelum mengajukan
+  // transaksi. Staf (admin/super_admin, rekber terpilih) memakai URL
+  // sosmed, bukan KYC dokumen — gerbang dilewati untuk mereka.
+  const buyerRoles = await getMyRoles(db, user.id);
+  if (!buyerRoles.isStaff) {
+    const buyerKyc = await getUserKycStatus(db, user.id);
+    if (buyerKyc !== "approved") {
+      redirect(`/dashboard/browse?error=${kycGateErrorKey(buyerKyc)}`);
+    }
   }
 
   const { data: transactionId, error } = await db.rpc(

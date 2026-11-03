@@ -2,13 +2,17 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
 import {
-  upsertKycSubmission,
+  updateSocialUrls,
   upsertQrProfile,
 } from "@/app/admin-actions";
 import AdminDenied from "@/components/AdminDenied";
 import DocumentUpload from "@/components/DocumentUpload";
 import SubmitButton from "@/components/SubmitButton";
 import { dateLabel } from "@/lib/admin-view";
+import {
+  SOCIAL_PLATFORMS,
+  isSocialProfileComplete,
+} from "@/lib/social-urls";
 
 export default async function BusinessProfile({
   searchParams,
@@ -23,23 +27,12 @@ export default async function BusinessProfile({
   const roles = await getMyRoles(db, user.id);
   if (!roles.isStaff) return <AdminDenied />;
 
-  // Profil QR + KYC milik sendiri (RLS: baca baris sendiri / super admin).
+  // Profil QR milik sendiri (RLS: baca baris sendiri / super admin).
   let qrProfile: {
     merchant_display_name: string;
     merchant_provider: string;
     qr_image_object_path: string;
     ownership_evidence_object_path: string | null;
-    status: string;
-    reviewer_note: string | null;
-    submitted_at: string;
-    reviewed_at: string | null;
-  } | null = null;
-  let kyc: {
-    legal_name: string;
-    phone_e164: string;
-    identity_document_type: string;
-    identity_document_object_path: string;
-    selfie_object_path: string;
     status: string;
     reviewer_note: string | null;
     submitted_at: string;
@@ -59,29 +52,39 @@ export default async function BusinessProfile({
   } catch {
     qrProfile = null;
   }
+  // URL sosmed dari baris profil bisnis terkini (pending/approved).
+  // Query TERPISAH dari profil QR: bila kolom belum ada karena migrasi
+  // belum dijalankan, hanya bagian sosmed yang kosong — tampilan QR
+  // tetap utuh.
+  let social: {
+    instagram_url: string | null;
+    facebook_url: string | null;
+    tiktok_url: string | null;
+    youtube_url: string | null;
+  } | null = null;
   try {
     const { data } = await db
-      .from("admin_kyc_submissions")
-      .select(
-        "legal_name,phone_e164,identity_document_type,identity_document_object_path,selfie_object_path,status,reviewer_note,submitted_at,reviewed_at"
-      )
+      .from("admin_qr_profiles")
+      .select("instagram_url,facebook_url,tiktok_url,youtube_url")
       .eq("admin_user_id", user.id)
+      .in("status", ["pending_review", "approved"])
       .order("submitted_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    kyc = data;
+    social = data;
   } catch {
-    kyc = null;
+    social = null;
   }
+  const socialComplete = isSocialProfileComplete(social);
 
   return (
     <section className="dashmain">
       <small className="eyebrow">PROFIL BISNIS ADMIN</small>
       <h1>Profil bisnis saya</h1>
       <p>
-        QR bisnis dan dokumen identitas untuk keperluan verifikasi oleh
-        super admin. Berkas tersimpan privat dan hanya dibaca pihak yang
-        berhak.
+        QR bisnis dan URL sosmed asli untuk keperluan verifikasi oleh
+        super admin. Berkas QR tersimpan privat dan hanya dibaca pihak
+        yang berhak; admin tidak memakai KYC dokumen.
       </p>
 
       {params.notice === "qr_submitted" && (
@@ -89,9 +92,9 @@ export default async function BusinessProfile({
           Profil QR bisnis diajukan dan menunggu tinjauan super admin.
         </div>
       )}
-      {params.notice === "kyc_submitted" && (
+      {params.notice === "social_saved" && (
         <div className="success rekber-message">
-          Pengajuan KYC diajukan dan menunggu tinjauan super admin.
+          URL sosmed disimpan.
         </div>
       )}
       {params.error === "invalid" && (
@@ -108,6 +111,12 @@ export default async function BusinessProfile({
       {params.error === "save" && (
         <div className="alert rekber-message">
           Penyimpanan gagal. Coba lagi.
+        </div>
+      )}
+      {params.error === "noprofile" && (
+        <div className="alert rekber-message">
+          Profil bisnis aktif belum ada. Ajukan profil QR bisnis
+          terlebih dahulu.
         </div>
       )}
 
@@ -187,87 +196,51 @@ export default async function BusinessProfile({
       </section>
 
       <section className="panel">
-        <h2>Dokumen identitas (KYC)</h2>
+        <h2>URL sosmed asli</h2>
         <p>
-          Identitas Anda diverifikasi super admin sebagai bagian dari
-          kurasi rekber terpilih. Dokumen tidak dibagikan ke buyer atau
-          seller.
+          Isi URL sosmed asli Anda. Admin tidak memakai KYC dokumen —
+          identitas Anda dibuktikan tautan sosmed asli ini, yang hanya
+          dibaca super admin untuk keperluan verifikasi.
         </p>
-        {kyc && (
-          <div className="tx-meta">
-            <div>
-              <small>STATUS</small>
-              <b>{kyc.status}</b>
-            </div>
-            <div>
-              <small>DIAJUKAN</small>
-              <b>{dateLabel(kyc.submitted_at)}</b>
-            </div>
-            <div>
-              <small>NAMA LEGAL</small>
-              <b>{kyc.legal_name}</b>
-            </div>
-            <div>
-              <small>JENIS DOKUMEN</small>
-              <b>{kyc.identity_document_type}</b>
-            </div>
+        <div className="tx-meta">
+          <div>
+            <small>STATUS URL SOSMED</small>
+            <b>{socialComplete ? "Lengkap" : "Belum lengkap"}</b>
           </div>
+        </div>
+        {!social ? (
+          <p>
+            Profil bisnis aktif belum ada — ajukan profil QR bisnis
+            terlebih dahulu, lalu lengkapi URL sosmed di sini.
+          </p>
+        ) : (
+          <>
+            {!socialComplete && (
+              <p>
+                Minimal satu URL valid wajib diisi sebelum Anda dapat
+                menangani transaksi: penugasan otomatis ditahan sampai
+                URL sosmed terisi.
+              </p>
+            )}
+            <form action={updateSocialUrls} className="admin-profile-form">
+              {SOCIAL_PLATFORMS.map((platform) => (
+                <label key={platform.key}>
+                  {platform.label}
+                  <input
+                    type="url"
+                    name={platform.column}
+                    maxLength={200}
+                    defaultValue={social[platform.column] ?? ""}
+                    placeholder={platform.placeholder}
+                  />
+                </label>
+              ))}
+              <SubmitButton className="btn" pendingLabel="Menyimpan…">
+                Simpan URL sosmed
+              </SubmitButton>
+            </form>
+          </>
         )}
-        {kyc?.reviewer_note && <p>Catatan peninjau: {kyc.reviewer_note}</p>}
-        <form action={upsertKycSubmission} className="admin-profile-form">
-          <label>
-            Nama legal
-            <input
-              type="text"
-              name="legal_name"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={kyc?.legal_name ?? ""}
-              placeholder="Nama sesuai dokumen identitas"
-            />
-          </label>
-          <label>
-            Nomor telepon (format E.164)
-            <input
-              type="tel"
-              name="phone_e164"
-              required
-              maxLength={20}
-              defaultValue={kyc?.phone_e164 ?? ""}
-              placeholder="mis. +6281234567890"
-            />
-          </label>
-          <label>
-            Jenis dokumen identitas
-            <select
-              name="identity_document_type"
-              required
-              defaultValue={kyc?.identity_document_type ?? "KTP"}
-            >
-              <option value="KTP">KTP</option>
-              <option value="SIM">SIM</option>
-              <option value="Paspor">Paspor</option>
-            </select>
-          </label>
-          <DocumentUpload
-            userId={user.id}
-            kind="kyc"
-            label="Dokumen identitas (JPG/PNG/PDF, maks. 5 MB)"
-            inputName="identity_document_object_path"
-            existingPath={kyc?.identity_document_object_path}
-          />
-          <DocumentUpload
-            userId={user.id}
-            kind="kyc"
-            label="Swafoto memegang dokumen (JPG/PNG, maks. 5 MB)"
-            inputName="selfie_object_path"
-            existingPath={kyc?.selfie_object_path}
-          />
-          <SubmitButton className="btn" pendingLabel="Mengajukan…">
-            Ajukan KYC
-          </SubmitButton>
-        </form>
       </section>
     </section>
   );

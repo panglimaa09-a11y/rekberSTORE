@@ -173,6 +173,8 @@ export function rpcErrorToken(error: { message?: string } | null): string {
     "INVALID_CATEGORY",
     "INVALID_STATUS",
     "INVALID_TRANSITION",
+    "NO_BUSINESS_PROFILE",
+    "INVALID_SOCIAL_URL",
   ];
   for (const token of tokens) {
     if (message.includes(token)) return token;

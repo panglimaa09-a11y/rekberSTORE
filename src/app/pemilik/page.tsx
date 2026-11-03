@@ -40,7 +40,7 @@ const ownerGroups: { heading: string; links: HubLink[] }[] = [
         href: "/pemilik/kelola-admin",
         icon: "＋",
         label: "Kelola Admin",
-        desc: "Daftarkan admin dan tinjau QR/KYC",
+        desc: "Daftarkan admin dan tinjau QR",
       },
     ],
   },

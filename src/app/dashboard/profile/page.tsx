@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updateDisplayName } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getMyRoles } from "@/lib/supabase/roles";
 import { getUserKycStatus, KYC_STATUS_LABELS } from "@/lib/kyc";
 import SubmitButton from "@/components/SubmitButton";
 
@@ -21,7 +22,12 @@ export default async function Profile({
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   const displayName =
     typeof metadata.display_name === "string" ? metadata.display_name : "";
-  const kycStatus = await getUserKycStatus(db, user.id);
+  const roles = await getMyRoles(db, user.id);
+  // Staf memakai URL sosmed, bukan KYC dokumen — status KYC pengguna
+  // tidak dibaca untuk mereka agar tidak ada prompt yang keliru.
+  const kycStatus = roles.isStaff
+    ? null
+    : await getUserKycStatus(db, user.id);
 
   return (
     <section className="dashmain">
@@ -76,15 +82,17 @@ export default async function Profile({
             <small>TERAKHIR MASUK</small>
             <b>{dateLabel(user.last_sign_in_at)}</b>
           </div>
-          <div>
-            <small>STATUS KYC</small>
-            <b>{KYC_STATUS_LABELS[kycStatus]}</b>
-            <small>
-              <Link href="/dashboard/kyc">
-                {kycStatus === "approved" ? "Lihat KYC" : "Kirim / kelola KYC"}
-              </Link>
-            </small>
-          </div>
+          {!roles.isStaff && kycStatus !== null && (
+            <div>
+              <small>STATUS KYC</small>
+              <b>{KYC_STATUS_LABELS[kycStatus]}</b>
+              <small>
+                <Link href="/dashboard/kyc">
+                  {kycStatus === "approved" ? "Lihat KYC" : "Kirim / kelola KYC"}
+                </Link>
+              </small>
+            </div>
+          )}
         </div>
       </section>
 

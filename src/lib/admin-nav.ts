@@ -14,8 +14,7 @@ export type AdminQueueKey =
   | "cases"
   | "userKyc"
   | "topup"
-  | "qr"
-  | "kyc";
+  | "qr";
 
 export type AdminNavEntry = {
   href: string;
@@ -94,7 +93,7 @@ export const adminHubGroups: AdminNavGroup[] = [
         href: "/admin/profil-bisnis",
         icon: "◉",
         label: "Profil Bisnis",
-        desc: "QR bisnis dan dokumen Anda",
+        desc: "QR bisnis dan URL sosmed Anda",
       },
     ],
   },
@@ -113,13 +112,6 @@ export const adminHubGroups: AdminNavGroup[] = [
         label: "Tinjauan QR",
         desc: "Setujui QR bisnis admin",
         queueKey: "qr",
-      },
-      {
-        href: "/admin/tinjauan-kyc",
-        icon: "◐",
-        label: "Tinjauan KYC",
-        desc: "Setujui KYC admin",
-        queueKey: "kyc",
       },
     ],
   },

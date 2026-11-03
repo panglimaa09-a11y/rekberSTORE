@@ -7,6 +7,8 @@ import {
   loadAdminQueueCounts,
   type AdminQueueCounts,
 } from "@/lib/admin-view";
+import { loadAdminSocialUrls } from "@/lib/admin-review";
+import { isSocialProfileComplete } from "@/lib/social-urls";
 
 const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
   disputes: "disputes_waiting",
@@ -14,7 +16,6 @@ const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
   userKyc: "user_kyc_pending",
   topup: "topup_pending",
   qr: "pending_qr",
-  kyc: "pending_kyc",
 };
 
 /**
@@ -41,6 +42,16 @@ export default async function AdminHub() {
 
   const counts = await loadAdminQueueCounts(db, roles.isSuperAdmin);
 
+  // Pengingat URL sosmed untuk staf yang belum lengkap: penugasan
+  // otomatis transaksi ditahan sampai minimal satu URL valid terisi.
+  // Gagal baca = tidak ada pengingat (penegakan akhir di database).
+  const socialMap = roles.isStaff
+    ? await loadAdminSocialUrls(db, [user.id])
+    : null;
+  const socialComplete =
+    socialMap !== null &&
+    isSocialProfileComplete(socialMap.get(user.id));
+
   return (
     <section className="dashmain admin-hub">
       <header>
@@ -54,6 +65,16 @@ export default async function AdminHub() {
         </div>
       </header>
 
+      {roles.isStaff && socialMap !== null && !socialComplete && (
+        <div className="notice rekber-message">
+          <p>
+            Lengkapi URL sosmed asli Anda di{" "}
+            <Link href="/admin/profil-bisnis">Profil Bisnis</Link> —
+            penugasan otomatis transaksi ditahan sampai minimal satu
+            URL valid terisi.
+          </p>
+        </div>
+      )}
       {groups.map((group) => (
         <section key={group.heading} className="hub-group">
           <small>{group.heading}</small>

@@ -12,6 +12,8 @@ type HubLink = {
   desc: string;
   /** Mode yang menampilkan kartu ini; tanpa nilai berarti semua mode. */
   modes?: Exclude<DashboardMode, "all">[];
+  /** Sembunyikan untuk staf (admin/super_admin) — mis. KYC pengguna. */
+  hideForStaff?: boolean;
 };
 
 const groups: { heading: string; links: HubLink[] }[] = [
@@ -90,6 +92,7 @@ const groups: { heading: string; links: HubLink[] }[] = [
         icon: "◍",
         label: "KYC Saya",
         desc: "Verifikasi identitas ke admin",
+        hideForStaff: true,
       },
       {
         href: "/dashboard/security",
@@ -118,7 +121,7 @@ const adminLinks: HubLink[] = [
     href: "/admin/profil-bisnis",
     icon: "▣",
     label: "Profil Bisnis",
-    desc: "QR bisnis dan dokumen admin",
+    desc: "QR bisnis dan URL sosmed admin",
   },
 ];
 
@@ -169,7 +172,8 @@ export default async function Dashboard({
       {visibleGroups.map((group) => {
         const links = group.links.filter(
           (link) =>
-            !link.modes || mode === "all" || link.modes.includes(mode)
+            !(roles.isStaff && link.hideForStaff) &&
+            (!link.modes || mode === "all" || link.modes.includes(mode))
         );
         if (links.length === 0) return null;
         return (

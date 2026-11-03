@@ -12,6 +12,8 @@ type NavLink = {
   label: string;
   /** Mode yang menampilkan tautan ini; tanpa nilai berarti semua mode. */
   modes?: Exclude<DashboardMode, "all">[];
+  /** Sembunyikan untuk staf (admin/super_admin) — mis. KYC pengguna. */
+  hideForStaff?: boolean;
 };
 
 const groups: {
@@ -40,7 +42,7 @@ const groups: {
     heading: "AKUN",
     links: [
       { href: "/dashboard/profile", label: "◉ Profil Saya" },
-      { href: "/dashboard/kyc", label: "◍ KYC Saya" },
+      { href: "/dashboard/kyc", label: "◍ KYC Saya", hideForStaff: true },
       { href: "/dashboard/security", label: "▣ Keamanan 2FA" },
       { href: "/", label: "Pusat Informasi" },
     ],
@@ -148,9 +150,10 @@ export default function DashboardNav({
         {visibleGroups.map((group) => {
           const links = group.links.filter(
             (link) =>
-              !link.modes ||
-              mode === "all" ||
-              link.modes.includes(mode)
+              !(isStaff && link.hideForStaff) &&
+              (!link.modes ||
+                mode === "all" ||
+                link.modes.includes(mode))
           );
           if (links.length === 0) return null;
           return (

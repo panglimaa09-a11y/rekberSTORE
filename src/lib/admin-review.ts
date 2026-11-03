@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SocialUrls } from "@/lib/social-urls";
 
 /**
- * Pemuat antrean tinjauan QR bisnis + KYC admin (super-admin saja).
+ * Pemuat antrean tinjauan QR bisnis (super-admin saja) + URL sosmed
+ * admin untuk tampilan tinjauan.
  * Dipakai bersama oleh halaman /admin/tinjauan-* dan halaman
  * /pemilik/kelola-admin agar query, signed URL, dan pencatatan akses
  * tidak diduplikasi di dua tempat. Modul murni server: boleh diimpor
@@ -23,18 +25,6 @@ export type QrReviewItem = {
   status: string;
   submitted_at: string;
   signedUrl: string | null;
-};
-
-export type KycReviewItem = {
-  id: string;
-  admin_user_id: string;
-  legal_name: string;
-  phone_e164: string;
-  identity_document_type: string;
-  identity_document_object_path: string;
-  selfie_object_path: string;
-  status: string;
-  submitted_at: string;
 };
 
 export async function loadQrReviewQueue(
@@ -87,37 +77,42 @@ export async function loadQrReviewQueue(
   return qrQueue;
 }
 
-export async function loadKycReviewQueue(
-  db: SupabaseClient
-): Promise<KycReviewItem[]> {
-  let kycQueue: KycReviewItem[] = [];
+/**
+ * URL sosmed terbaru tiap admin dari baris profil bisnis terkininya
+ * (pending_review/approved — aturan yang sama dengan penegakan di
+ * database). Hanya untuk tampilan tinjauan super-admin dan pengingat
+ * staf; bukan berkas privat sehingga tidak ada pencatatan akses.
+ * Gagal baca apa pun (termasuk kolom belum ada karena migrasi belum
+ * dijalankan) = null; pemanggil menampilkan halaman tanpa URL.
+ */
+export async function loadAdminSocialUrls(
+  db: SupabaseClient,
+  userIds: string[]
+): Promise<Map<string, SocialUrls> | null> {
+  if (userIds.length === 0) return new Map();
   try {
     const { data, error } = await db
-      .from("admin_kyc_submissions")
+      .from("admin_qr_profiles")
       .select(
-        "id,admin_user_id,legal_name,phone_e164,identity_document_type,identity_document_object_path,selfie_object_path,status,submitted_at"
+        "admin_user_id,instagram_url,facebook_url,tiktok_url,youtube_url,submitted_at"
       )
-      .eq("status", "pending_review")
-      .order("submitted_at", { ascending: true })
-      .limit(20);
-    if (!error) kycQueue = data ?? [];
-  } catch {
-    kycQueue = [];
-  }
-
-  if (kycQueue.length > 0) {
-    try {
-      await db.rpc("log_rekber_access", {
-        p_transaction_id: null,
-        p_action: "review_queue_view",
-        p_details: {
-          admin_kyc_ids: kycQueue.map((k) => k.id),
-        },
-      });
-    } catch {
-      // Pencatatan gagal — antrean tetap tampil.
+      .in("admin_user_id", userIds)
+      .in("status", ["pending_review", "approved"])
+      .order("submitted_at", { ascending: false });
+    if (error) return null;
+    const map = new Map<string, SocialUrls>();
+    for (const row of data ?? []) {
+      if (!map.has(row.admin_user_id)) {
+        map.set(row.admin_user_id, {
+          instagram_url: row.instagram_url,
+          facebook_url: row.facebook_url,
+          tiktok_url: row.tiktok_url,
+          youtube_url: row.youtube_url,
+        });
+      }
     }
+    return map;
+  } catch {
+    return null;
   }
-
-  return kycQueue;
 }

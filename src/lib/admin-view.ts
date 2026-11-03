@@ -79,7 +79,6 @@ export type AdminQueueCounts = {
   user_kyc_pending: number;
   topup_pending: number;
   pending_qr: number;
-  pending_kyc: number;
 };
 
 /**
@@ -105,7 +104,6 @@ export async function loadAdminQueueCounts(
       user_kyc_pending: Number(row.user_kyc_pending ?? 0),
       topup_pending: Number(row.topup_pending ?? 0),
       pending_qr: isSuperAdmin ? Number(row.pending_qr ?? 0) : 0,
-      pending_kyc: isSuperAdmin ? Number(row.pending_kyc ?? 0) : 0,
     };
     return counts;
   } catch (error) {

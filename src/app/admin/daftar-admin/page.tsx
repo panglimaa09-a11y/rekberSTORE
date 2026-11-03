@@ -8,6 +8,8 @@ import {
 } from "@/app/admin-actions";
 import AdminDenied from "@/components/AdminDenied";
 import SubmitButton from "@/components/SubmitButton";
+import SocialLinks from "@/components/SocialLinks";
+import { loadAdminSocialUrls } from "@/lib/admin-review";
 
 const notices: Record<string, string> = {
   appointed: "Admin terpilih berhasil didaftarkan.",
@@ -55,6 +57,11 @@ export default async function AdminAppointments({
   } catch {
     staffList = [];
   }
+
+  const socialMap = await loadAdminSocialUrls(
+    db,
+    staffList.map((s) => s.user_id)
+  );
 
   return (
     <section className="dashmain">
@@ -110,6 +117,7 @@ export default async function AdminAppointments({
                   <th>Admin</th>
                   <th>Peran</th>
                   <th>Status QR bisnis</th>
+                  <th>URL sosmed</th>
                   <th>Tindakan</th>
                 </tr>
               </thead>
@@ -122,6 +130,9 @@ export default async function AdminAppointments({
                     </td>
                     <td>{staff.roles.join(", ")}</td>
                     <td>{staff.qr_status ?? "Belum mengajukan"}</td>
+                    <td>
+                      <SocialLinks urls={socialMap?.get(staff.user_id)} />
+                    </td>
                     <td>
                       {staff.roles.includes("admin") &&
                         staff.user_id !== user.id && (

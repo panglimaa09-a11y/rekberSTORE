@@ -36,7 +36,6 @@ const metrics: {
   { key: "total_listings", label: "Total penawaran", format: String },
   { key: "active_listings", label: "Penawaran aktif", format: String },
   { key: "pending_qr", label: "Antrean tinjauan QR", format: String },
-  { key: "pending_kyc", label: "Antrean tinjauan KYC", format: String },
   { key: "topup_paid_count", label: "Pesanan top up lunas", format: String },
   {
     key: "topup_paid_total_idr",

@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { isMissingRpcError, rpcErrorToken } from "@/lib/rekber-stages";
+import {
+  SOCIAL_PLATFORMS,
+  isValidSocialUrl,
+  normalizeSocialUrl,
+  type SocialUrls,
+} from "@/lib/social-urls";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
@@ -171,42 +177,6 @@ export async function reviewQrProfile(form: FormData) {
   redirect(withNotice(base, "qr_reviewed"));
 }
 
-/** Tinjau pengajuan KYC oleh super_admin. */
-export async function reviewKycSubmission(form: FormData) {
-  const submissionId = String(form.get("submission_id") || "").trim();
-  const decision = String(form.get("decision") || "");
-  const note = String(form.get("note") || "").trim();
-  const base = returnBase(
-    form,
-    ["/admin/tinjauan-kyc", OWNER_MANAGE_URL],
-    "/admin/tinjauan-kyc"
-  );
-
-  if (
-    !UUID_RE.test(submissionId) ||
-    !["approved", "rejected", "suspended"].includes(decision) ||
-    note.length > 500
-  ) {
-    redirect(withNotice(base, "review_invalid"));
-  }
-
-  const db = await requireUser();
-  const { error } = await db.rpc("review_rekber_kyc_submission", {
-    p_submission_id: submissionId,
-    p_decision: decision,
-    p_note: note || null,
-  });
-
-  if (error) {
-    if (isMissingRpcError(error)) redirect(withNotice(base, "stage_unavailable"));
-    redirect(withNotice(base, "review_error"));
-  }
-
-  revalidatePath("/admin/tinjauan-kyc");
-  revalidatePath(OWNER_MANAGE_URL);
-  redirect(withNotice(base, "kyc_reviewed"));
-}
-
 /**
  * Simpan/ajukan profil QR bisnis oleh admin itu sendiri. Path berkas
  * berasal dari unggahan Storage privat (komponen DocumentUpload),
@@ -248,47 +218,49 @@ export async function upsertQrProfile(form: FormData) {
   redirect("/admin/profil-bisnis?notice=qr_submitted");
 }
 
-/** Simpan/ajukan dokumen KYC oleh admin itu sendiri. */
-export async function upsertKycSubmission(form: FormData) {
-  const legalName = String(form.get("legal_name") || "").trim();
-  const phone = String(form.get("phone_e164") || "").trim();
-  const docType = String(form.get("identity_document_type") || "").trim();
-  const docPath = String(form.get("identity_document_object_path") || "").trim();
-  const selfiePath = String(form.get("selfie_object_path") || "").trim();
+/**
+ * Simpan URL sosmed asli oleh admin itu sendiri (pengganti KYC
+ * dokumen). Minimal satu URL valid wajib ada sebelum admin dapat
+ * menangani transaksi; penegakan akhir ada di database (penjaga
+ * penugasan otomatis). Mengosongkan keempat kolom diizinkan — profil
+ * menjadi belum lengkap sampai satu URL valid terisi lagi.
+ */
+export async function updateSocialUrls(form: FormData) {
+  const values: SocialUrls = {
+    instagram_url: normalizeSocialUrl(form.get("instagram_url")),
+    facebook_url: normalizeSocialUrl(form.get("facebook_url")),
+    tiktok_url: normalizeSocialUrl(form.get("tiktok_url")),
+    youtube_url: normalizeSocialUrl(form.get("youtube_url")),
+  };
 
-  if (
-    legalName.length < 2 ||
-    legalName.length > 120 ||
-    !phone ||
-    phone.length > 20 ||
-    !docType ||
-    docType.length > 40 ||
-    !docPath ||
-    docPath.includes("..") ||
-    !selfiePath ||
-    selfiePath.includes("..")
-  ) {
-    redirect("/admin/profil-bisnis?error=invalid");
+  for (const platform of SOCIAL_PLATFORMS) {
+    const value = values[platform.column];
+    if (value !== null && !isValidSocialUrl(platform.key, value)) {
+      redirect("/admin/profil-bisnis?error=invalid");
+    }
   }
 
   const db = await requireUser();
-  const { error } = await db.rpc("upsert_rekber_kyc_submission", {
-    p_legal_name: legalName,
-    p_phone_e164: phone,
-    p_identity_document_type: docType,
-    p_identity_document_object_path: docPath,
-    p_selfie_object_path: selfiePath,
+  const { error } = await db.rpc("update_rekber_social_urls", {
+    p_instagram_url: values.instagram_url,
+    p_facebook_url: values.facebook_url,
+    p_tiktok_url: values.tiktok_url,
+    p_youtube_url: values.youtube_url,
   });
 
   if (error) {
     if (isMissingRpcError(error)) {
       redirect("/admin/profil-bisnis?error=unavailable");
     }
+    const token = rpcErrorToken(error);
+    if (token === "NO_BUSINESS_PROFILE") {
+      redirect("/admin/profil-bisnis?error=noprofile");
+    }
     redirect("/admin/profil-bisnis?error=save");
   }
 
   revalidatePath("/admin/profil-bisnis");
-  redirect("/admin/profil-bisnis?notice=kyc_submitted");
+  redirect("/admin/profil-bisnis?notice=social_saved");
 }
 
 /** Jeda/aktifkan listing oleh staf. Tanpa hapus (tidak ada policy DELETE). */

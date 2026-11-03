@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getMyRoles } from "@/lib/supabase/roles";
 import { submitUserKyc } from "@/app/kyc-actions";
 import { KYC_STATUS_LABELS, type KycStatus } from "@/lib/kyc";
 import SubmitButton from "@/components/SubmitButton";
@@ -17,6 +18,8 @@ export default async function KycPage({
   const db = await supabaseServer();
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect("/login");
+
+  const roles = await getMyRoles(db, user.id);
 
   let submission: {
     id: string;
@@ -66,6 +69,16 @@ export default async function KycPage({
           Kembali ke profil
         </Link>
       </header>
+
+      {roles.isStaff && (
+        <div className="notice rekber-message">
+          <p>
+            Anda masuk sebagai admin terpilih — KYC dokumen pengguna
+            tidak berlaku untuk Anda. Lengkapi URL sosmed asli di{" "}
+            <Link href="/admin/profil-bisnis">Profil Bisnis</Link>.
+          </p>
+        </div>
+      )}
 
       {params.notice === "submitted" && (
         <div className="success rekber-message">

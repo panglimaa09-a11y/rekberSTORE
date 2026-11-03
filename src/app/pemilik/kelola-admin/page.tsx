@@ -4,19 +4,19 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
 import {
   appointRekberAdmin,
-  reviewKycSubmission,
   reviewQrProfile,
   revokeRekberAdmin,
 } from "@/app/admin-actions";
 import AdminDenied from "@/components/AdminDenied";
 import SubmitButton from "@/components/SubmitButton";
+import SocialLinks from "@/components/SocialLinks";
 import {
   dateLabel,
   displayNameFor,
   loadDisplayNames,
 } from "@/lib/admin-view";
 import {
-  loadKycReviewQueue,
+  loadAdminSocialUrls,
   loadQrReviewQueue,
 } from "@/lib/admin-review";
 
@@ -28,7 +28,6 @@ const notices: Record<string, string> = {
   revoked: "Peran admin dicabut.",
   revoke_error: "Pencabutan peran admin gagal. Coba lagi.",
   qr_reviewed: "Profil QR bisnis sudah ditinjau.",
-  kyc_reviewed: "Pengajuan KYC sudah ditinjau.",
   review_invalid: "Putusan atau catatan tinjauan tidak valid.",
   review_error: "Tinjauan gagal diproses. Coba lagi.",
   stage_unavailable:
@@ -38,15 +37,13 @@ const notices: Record<string, string> = {
 
 /**
  * Kelola admin (SUPER-ADMIN SAJA): penunjukan/pencabutan admin
- * terpilih + antrean tinjauan QR bisnis dan KYC admin. Memakai ulang
- * server action dan pemuat antrean yang sama dengan halaman
+ * terpilih + antrean tinjauan QR bisnis + URL sosmed admin. Memakai
+ * ulang server action dan pemuat antrean yang sama dengan halaman
  * /admin — tidak ada logika duplikat di sini. Formulir mengirim
  * return_to agar aksi kembali ke halaman ini, bukan ke /admin.
  *
- * Penampil dokumen KYC memakai penampil bertanda air bersama di
- * /admin/dokumen (satu-satunya tautan keluar shell pemilik, karena
- * penampil itu menegakkan guard staf + tanda air + audit; tidak
- * diduplikasi).
+ * Admin tidak memakai KYC dokumen; URL sosmed asli ditampilkan
+ * read-only di tabel staf agar Tuan dapat memeriksanya.
  */
 export default async function OwnerManageAdmins({
   searchParams,
@@ -78,14 +75,14 @@ export default async function OwnerManageAdmins({
   }
 
   const qrQueue = await loadQrReviewQueue(db);
-  const kycQueue = await loadKycReviewQueue(db);
+  const socialMap = await loadAdminSocialUrls(
+    db,
+    staffList.map((s) => s.user_id)
+  );
 
   const nameMap = await loadDisplayNames(
     db,
-    [
-      ...qrQueue.map((q) => q.admin_user_id),
-      ...kycQueue.map((k) => k.admin_user_id),
-    ]
+    qrQueue.map((q) => q.admin_user_id)
   );
   const displayName = (uid: string | null | undefined) =>
     displayNameFor(nameMap, user.id, uid);
@@ -144,6 +141,7 @@ export default async function OwnerManageAdmins({
                   <th>Admin</th>
                   <th>Peran</th>
                   <th>Status QR bisnis</th>
+                  <th>URL sosmed</th>
                   <th>Tindakan</th>
                 </tr>
               </thead>
@@ -156,6 +154,9 @@ export default async function OwnerManageAdmins({
                     </td>
                     <td>{staff.roles.join(", ")}</td>
                     <td>{staff.qr_status ?? "Belum mengajukan"}</td>
+                    <td>
+                      <SocialLinks urls={socialMap?.get(staff.user_id)} />
+                    </td>
                     <td>
                       {staff.roles.includes("admin") &&
                         staff.user_id !== user.id && (
@@ -235,59 +236,6 @@ export default async function OwnerManageAdmins({
         ))}
       </section>
 
-      <section className="panel">
-        <h2>Tinjauan KYC ({kycQueue.length})</h2>
-        <p>
-          Dokumen identitas hanya dibuka untuk keperluan tinjauan dan
-          tidak dibagikan ke pihak lain.
-        </p>
-        {kycQueue.length === 0 && (
-          <div className="empty">
-            <h3>Tidak ada antrean KYC</h3>
-          </div>
-        )}
-        {kycQueue.map((submission) => (
-          <article key={submission.id} className="admin-item">
-            <div>
-              <b>{submission.legal_name}</b>
-              <small>
-                {`${submission.identity_document_type} · ${submission.phone_e164} · ${displayName(submission.admin_user_id)} · ${dateLabel(submission.submitted_at) ?? ""}`}
-              </small>
-              <p>
-                <Link
-                  href={`/admin/dokumen?path=${encodeURIComponent(submission.identity_document_object_path)}&ctx=kyc_review`}
-                >
-                  Buka dokumen identitas (penampil bertanda air)
-                </Link>{" "}
-                <Link
-                  href={`/admin/dokumen?path=${encodeURIComponent(submission.selfie_object_path)}&ctx=kyc_review`}
-                >
-                  Buka swafoto (penampil bertanda air)
-                </Link>
-              </p>
-            </div>
-            <form action={reviewKycSubmission} className="dispute-form">
-              <input type="hidden" name="return_to" value="/pemilik/kelola-admin" />
-              <input type="hidden" name="submission_id" value={submission.id} />
-              <label>
-                Catatan tinjauan
-                <input type="text" name="note" maxLength={500} placeholder="Opsional" />
-              </label>
-              <div className="rekber-actions">
-                <SubmitButton className="btn" name="decision" value="approved" pendingLabel="Meninjau…">
-                  Setujui
-                </SubmitButton>
-                <SubmitButton className="rekber-reject" name="decision" value="rejected" pendingLabel="Meninjau…">
-                  Tolak
-                </SubmitButton>
-                <SubmitButton className="rekber-reject" name="decision" value="suspended" pendingLabel="Meninjau…">
-                  Tangguhkan
-                </SubmitButton>
-              </div>
-            </form>
-          </article>
-        ))}
-      </section>
     </section>
   );
 }
