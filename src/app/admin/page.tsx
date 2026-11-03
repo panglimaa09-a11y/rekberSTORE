@@ -7,8 +7,9 @@ import {
   loadAdminQueueCounts,
   type AdminQueueCounts,
 } from "@/lib/admin-view";
-import { loadAdminSocialUrls } from "@/lib/admin-review";
+import { loadAdminSocialUrls, loadAdminLocations } from "@/lib/admin-review";
 import { isSocialProfileComplete } from "@/lib/social-urls";
+import { isLocationComplete } from "@/lib/admin-location";
 
 const queueField: Record<AdminQueueKey, keyof AdminQueueCounts> = {
   disputes: "disputes_waiting",
@@ -52,6 +53,21 @@ export default async function AdminHub() {
     socialMap !== null &&
     isSocialProfileComplete(socialMap.get(user.id));
 
+  // Pengingat lokasi untuk staf yang belum lengkap: lokasi wajib
+  // diisi di Profil Bisnis agar tampil di pencari admin. Tanpa
+  // pemblokiran penugasan (tidak pernah diputuskan untuk lokasi).
+  // Gagal baca = tidak ada pengingat lokasi.
+  const locationMap = roles.isStaff
+    ? await loadAdminLocations(db, [user.id])
+    : null;
+  const locationComplete =
+    locationMap !== null && isLocationComplete(locationMap.get(user.id));
+
+  const showReminder =
+    roles.isStaff &&
+    ((socialMap !== null && !socialComplete) ||
+      (locationMap !== null && !locationComplete));
+
   return (
     <section className="dashmain admin-hub">
       <header>
@@ -65,13 +81,24 @@ export default async function AdminHub() {
         </div>
       </header>
 
-      {roles.isStaff && socialMap !== null && !socialComplete && (
+      {showReminder && (
         <div className="notice rekber-message">
           <p>
-            Lengkapi URL sosmed asli Anda di{" "}
-            <Link href="/admin/profil-bisnis">Profil Bisnis</Link> —
-            penugasan otomatis transaksi ditahan sampai minimal satu
-            URL valid terisi.
+            {socialMap !== null && !socialComplete && (
+              <>
+                Lengkapi URL sosmed asli Anda di{" "}
+                <Link href="/admin/profil-bisnis">Profil Bisnis</Link>{" "}
+                — penugasan otomatis transaksi ditahan sampai minimal
+                satu URL valid terisi.{" "}
+              </>
+            )}
+            {locationMap !== null && !locationComplete && (
+              <>
+                Lengkapi juga lokasi (provinsi dan kel/kecamatan) Anda
+                di <Link href="/admin/profil-bisnis">Profil Bisnis</Link>{" "}
+                agar tampil di pencari admin.
+              </>
+            )}
           </p>
         </div>
       )}

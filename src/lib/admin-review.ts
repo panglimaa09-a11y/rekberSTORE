@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SocialUrls } from "@/lib/social-urls";
+import type { AdminLocation } from "@/lib/admin-location";
 
 /**
  * Pemuat antrean tinjauan QR bisnis (super-admin saja) + URL sosmed
@@ -108,6 +109,43 @@ export async function loadAdminSocialUrls(
           facebook_url: row.facebook_url,
           tiktok_url: row.tiktok_url,
           youtube_url: row.youtube_url,
+        });
+      }
+    }
+    return map;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lokasi terbaru tiap admin dari baris profil bisnis terkininya
+ * (pending_review/approved — aturan yang sama dengan penegakan di
+ * database). Hanya untuk pengingat staf di hub admin; lokasi publik
+ * untuk pencari dibaca lewat RPC list_rekber_admin_locations.
+ * Gagal baca apa pun (termasuk kolom belum ada karena migrasi belum
+ * dijalankan) = null; pemanggil menampilkan halaman tanpa pengingat
+ * lokasi.
+ */
+export async function loadAdminLocations(
+  db: SupabaseClient,
+  userIds: string[]
+): Promise<Map<string, AdminLocation> | null> {
+  if (userIds.length === 0) return new Map();
+  try {
+    const { data, error } = await db
+      .from("admin_qr_profiles")
+      .select("admin_user_id,provinsi,kel_kecamatan,submitted_at")
+      .in("admin_user_id", userIds)
+      .in("status", ["pending_review", "approved"])
+      .order("submitted_at", { ascending: false });
+    if (error) return null;
+    const map = new Map<string, AdminLocation>();
+    for (const row of data ?? []) {
+      if (!map.has(row.admin_user_id)) {
+        map.set(row.admin_user_id, {
+          provinsi: row.provinsi,
+          kel_kecamatan: row.kel_kecamatan,
         });
       }
     }

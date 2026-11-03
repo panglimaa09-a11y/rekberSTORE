@@ -924,6 +924,21 @@
 .pesan-meta b{color:#54dca8;font-weight:700}
 @media(max-width:520px){.shop-grid{gap:8px}.shop-body{padding:9px}.shop-body h3{font-size:12px;min-height:34px}.shop-price{font-size:14px}.shop-buy{padding:9px;font-size:12px}}
 
+/* Pencari admin terdekat: kartu mengikuti token + bentuk shop-card
+   (border, radius, latar), tanpa gambar hero. Tanpa jarak/km/peta. */
+.finder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.finder-card{border:1px solid #293e3b;border-radius:13px;background:#101b20;padding:16px;display:flex;flex-direction:column;gap:10px}
+.finder-card-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.finder-card h3{font:700 15px Manrope;margin:0;overflow-wrap:anywhere}
+.finder-chosen{color:#40d5a0;font-size:11px;font-weight:800;margin:0}
+.finder-loc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.finder-loc small{display:block;color:var(--muted);font-size:10px;letter-spacing:1px;font-weight:700}
+.finder-loc b{display:block;margin-top:4px;font-size:12px;overflow-wrap:anywhere}
+.finder-tier{font:700 14px Manrope;margin:26px 0 0}
+.finder-card .btn{margin-top:auto;align-self:flex-start}
+@media(max-width:850px){.finder-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.finder-grid{grid-template-columns:1fr}.finder-loc{grid-template-columns:1fr}}
+
 /* Perbaikan panel admin 3 Nov 2026: sidebar sticky + aksen ungu hemat
    + badge antrean hub. Semua aturan di bawah dibatasi shell admin /
    pemilik (.admin-shell) agar shell dashboard tidak berubah. Aksen

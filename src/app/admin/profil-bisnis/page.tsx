@@ -3,12 +3,17 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/supabase/roles";
 import {
   updateSocialUrls,
+  updateAdminLocation,
   upsertQrProfile,
 } from "@/app/admin-actions";
 import AdminDenied from "@/components/AdminDenied";
 import DocumentUpload from "@/components/DocumentUpload";
 import SubmitButton from "@/components/SubmitButton";
 import { dateLabel } from "@/lib/admin-view";
+import {
+  PROVINCES,
+  isLocationComplete,
+} from "@/lib/admin-location";
 import {
   SOCIAL_PLATFORMS,
   isSocialProfileComplete,
@@ -77,14 +82,37 @@ export default async function BusinessProfile({
   }
   const socialComplete = isSocialProfileComplete(social);
 
+  // Lokasi dari baris profil bisnis terkini (pending/approved).
+  // Query TERPISAH seperti sosmed: bila kolom belum ada karena
+  // migrasi belum dijalankan, hanya bagian lokasi yang kosong.
+  let location: {
+    provinsi: string | null;
+    kel_kecamatan: string | null;
+  } | null = null;
+  try {
+    const { data } = await db
+      .from("admin_qr_profiles")
+      .select("provinsi,kel_kecamatan")
+      .eq("admin_user_id", user.id)
+      .in("status", ["pending_review", "approved"])
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    location = data;
+  } catch {
+    location = null;
+  }
+  const locationComplete = isLocationComplete(location);
+
   return (
     <section className="dashmain">
       <small className="eyebrow">PROFIL BISNIS ADMIN</small>
       <h1>Profil bisnis saya</h1>
       <p>
         QR bisnis dan URL sosmed asli untuk keperluan verifikasi oleh
-        super admin. Berkas QR tersimpan privat dan hanya dibaca pihak
-        yang berhak; admin tidak memakai KYC dokumen.
+        super admin, serta lokasi untuk pencari admin. Berkas QR
+        tersimpan privat dan hanya dibaca pihak yang berhak; admin
+        tidak memakai KYC dokumen.
       </p>
 
       {params.notice === "qr_submitted" && (
@@ -95,6 +123,11 @@ export default async function BusinessProfile({
       {params.notice === "social_saved" && (
         <div className="success rekber-message">
           URL sosmed disimpan.
+        </div>
+      )}
+      {params.notice === "location_saved" && (
+        <div className="success rekber-message">
+          Lokasi disimpan.
         </div>
       )}
       {params.error === "invalid" && (
@@ -240,6 +273,60 @@ export default async function BusinessProfile({
               </SubmitButton>
             </form>
           </>
+        )}
+      </section>
+
+      <section className="panel">
+        <h2>Lokasi</h2>
+        <p>
+          Provinsi dan kel/kecamatan Anda tampil publik di pencari
+          admin agar buyer dan seller menemukan admin di wilayah yang
+          sama. Alamat persis tidak pernah diminta atau disimpan —
+          cukup provinsi dan kel/kecamatan.
+        </p>
+        <div className="tx-meta">
+          <div>
+            <small>STATUS LOKASI</small>
+            <b>{locationComplete ? "Lengkap" : "Belum lengkap"}</b>
+          </div>
+        </div>
+        {!location ? (
+          <p>
+            Profil bisnis aktif belum ada — ajukan profil QR bisnis
+            terlebih dahulu, lalu lengkapi lokasi di sini.
+          </p>
+        ) : (
+          <form action={updateAdminLocation} className="admin-profile-form">
+            <label>
+              Provinsi
+              <select
+                name="provinsi"
+                required
+                defaultValue={location.provinsi ?? ""}
+              >
+                <option value="">Pilih provinsi</option>
+                {PROVINCES.map((provinsi) => (
+                  <option key={provinsi} value={provinsi}>
+                    {provinsi}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Kel / Kecamatan
+              <input
+                type="text"
+                name="kel_kecamatan"
+                required
+                maxLength={120}
+                defaultValue={location.kel_kecamatan ?? ""}
+                placeholder="mis. Sukodono"
+              />
+            </label>
+            <SubmitButton className="btn" pendingLabel="Menyimpan…">
+              Simpan lokasi
+            </SubmitButton>
+          </form>
         )}
       </section>
     </section>

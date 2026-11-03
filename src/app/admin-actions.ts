@@ -10,6 +10,12 @@ import {
   normalizeSocialUrl,
   type SocialUrls,
 } from "@/lib/social-urls";
+import {
+  KEL_KECAMATAN_MAX_LENGTH,
+  isValidProvince,
+  normalizeKelKecamatan,
+  normalizeProvince,
+} from "@/lib/admin-location";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
@@ -261,6 +267,48 @@ export async function updateSocialUrls(form: FormData) {
 
   revalidatePath("/admin/profil-bisnis");
   redirect("/admin/profil-bisnis?notice=social_saved");
+}
+
+/**
+ * Simpan lokasi admin (provinsi + kel/kecamatan) oleh admin itu
+ * sendiri, untuk modul CARI ADMIN TERDEKAT. Lokasi wajib diisi di
+ * form, tetapi TIDAK ada penegakan pemblokiran penugasan transaksi
+ * untuk lokasi (keputusan pemblokiran tidak pernah ada — berbeda
+ * dengan URL sosmed): pengingat saja di hub admin, tanpa mengubah
+ * logika reserve/penugasan di database. Lokasi tampil publik di
+ * pencari; alamat persis tidak pernah diminta.
+ */
+export async function updateAdminLocation(form: FormData) {
+  const provinsi = normalizeProvince(form.get("provinsi"));
+  const kelKecamatan = normalizeKelKecamatan(form.get("kel_kecamatan"));
+
+  if (
+    !isValidProvince(provinsi) ||
+    kelKecamatan === null ||
+    kelKecamatan.length > KEL_KECAMATAN_MAX_LENGTH
+  ) {
+    redirect("/admin/profil-bisnis?error=invalid");
+  }
+
+  const db = await requireUser();
+  const { error } = await db.rpc("update_rekber_admin_location", {
+    p_provinsi: provinsi,
+    p_kel_kecamatan: kelKecamatan,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error)) {
+      redirect("/admin/profil-bisnis?error=unavailable");
+    }
+    const token = rpcErrorToken(error);
+    if (token === "NO_BUSINESS_PROFILE") {
+      redirect("/admin/profil-bisnis?error=noprofile");
+    }
+    redirect("/admin/profil-bisnis?error=save");
+  }
+
+  revalidatePath("/admin/profil-bisnis");
+  redirect("/admin/profil-bisnis?notice=location_saved");
 }
 
 /** Jeda/aktifkan listing oleh staf. Tanpa hapus (tidak ada policy DELETE). */

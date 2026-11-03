@@ -51,6 +51,12 @@ const groups: { heading: string; links: HubLink[] }[] = [
         desc: "Chat transaksi dengan buyer, seller, dan penangan",
       },
       {
+        href: "/dashboard/cari-admin",
+        icon: "⌖",
+        label: "Cari Admin Terdekat",
+        desc: "Admin berdasarkan provinsi dan kel/kecamatan",
+      },
+      {
         href: "/dashboard/sell",
         icon: "＋",
         label: "Pasang Penawaran",
