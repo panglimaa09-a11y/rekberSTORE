@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createListing } from "@/app/marketplace-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { KYC_ERROR_COPY } from "@/lib/kyc";
+import ListingPhotoPicker from "@/components/ListingPhotoPicker";
 import SubmitButton from "@/components/SubmitButton";
 
 const categories = [
@@ -18,7 +19,7 @@ const errorCopy: Record<string, string> = {
   database:
     "Listing gagal disimpan. Periksa koneksi dan coba lagi.",
   image:
-    "Gambar tidak valid. Pakai JPG, PNG, atau WebP, maksimal 5 MB.",
+    "Gambar tidak valid. Pakai JPG, PNG, atau WebP.",
   upload:
     "Gambar gagal diunggah. Periksa koneksi dan coba lagi.",
   ...KYC_ERROR_COPY,
@@ -55,8 +56,7 @@ export default async function Sell({
           {categories.map(c=><option key={c}>{c}</option>)}
         </select></label>
         <label>Harga (Rupiah)<input name="price" type="number" min="1000" step="1000" required/></label>
-        <label>Gambar cover (opsional)<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label>
-        <p>Gambar tampil sebagai hero di marketplace. JPG, PNG, atau WebP, maksimal 5 MB.</p>
+        <ListingPhotoPicker label="Foto (opsional)" />
         <label>Deskripsi<textarea name="description" minLength={20} maxLength={3000} required rows={6}/></label>
         <label className="market-check"><input type="checkbox" name="ownership" value="yes" required/> Saya memiliki hak untuk menjual dan mengalihkan aset ini.</label>
         <SubmitButton className="market-primary" pendingLabel="Menerbitkan…">Terbitkan Listing</SubmitButton>

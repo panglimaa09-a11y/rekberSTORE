@@ -7,9 +7,62 @@ import { getUserKycStatus, kycGateErrorKey } from "@/lib/kyc";
 import { getMyRoles } from "@/lib/supabase/roles";
 import {
   LISTING_IMAGE_BUCKET,
+  listingImageExt,
   listingImagePath,
-  validateListingImage,
+  validateListingImages,
 } from "@/lib/listing-image";
+
+type ListingDb = Awaited<ReturnType<typeof supabaseServer>>;
+
+/** Berkas foto dari form: input baru `images` (multiple), dengan
+ *  fallback input lama `image` (satu berkas, dari halaman yang
+ *  tersimpan di cache browser sebelum perubahan ini). */
+function collectListingFiles(form: FormData): File[] {
+  const files: File[] = [];
+  for (const value of [...form.getAll("images"), ...form.getAll("image")]) {
+    if (value instanceof File && value.size > 0) files.push(value);
+  }
+  return files;
+}
+
+/** True bila error PostgREST berarti kolom image_paths belum ada
+ *  (migrasi 80010 belum dijalankan) — bukan kegagalan database lain. */
+function isMissingImagePathsColumn(error: {
+  code?: string | null;
+  message?: string | null;
+} | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST204") return true;
+  return /image_paths/i.test(error.message ?? "");
+}
+
+/** Unggah semua foto, urut pilihan. Satu gagal = objek yang sudah
+ *  terunggah dibersihkan lalu dialihkan ke halaman error unggah. */
+async function uploadListingImages(
+  db: ListingDb,
+  userId: string,
+  files: File[],
+  uploadErrorRedirect: string
+): Promise<string[]> {
+  const paths: string[] = [];
+  for (const file of files) {
+    const path = listingImagePath(userId, listingImageExt(file));
+    const { error } = await db.storage
+      .from(LISTING_IMAGE_BUCKET)
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+    if (error) {
+      if (paths.length > 0) {
+        await db.storage.from(LISTING_IMAGE_BUCKET).remove(paths);
+      }
+      redirect(uploadErrorRedirect);
+    }
+    paths.push(path);
+  }
+  return paths;
+}
 
 const categories = [
   "Gaming",
@@ -40,11 +93,10 @@ export async function createListing(form: FormData) {
 
   if (!user) redirect("/login");
 
-  // Gambar cover (opsional): hanya jpeg/png/webp, maks 5 MB.
-  const imageValue = form.get("image");
-  const imageFile =
-    imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
-  if (validateListingImage(imageFile) !== null) {
+  // Foto (opsional, boleh beberapa): hanya tipe JPG/PNG/WebP yang
+  // diperiksa — tidak ada batas ukuran per foto di aplikasi.
+  const imageFiles = collectListingFiles(form);
+  if (validateListingImages(imageFiles) !== null) {
     redirect("/dashboard/sell?error=image");
   }
 
@@ -60,27 +112,22 @@ export async function createListing(form: FormData) {
   }
 
   // Unggah dulu, baru simpan listing: gagal unggah = listing tidak dibuat.
-  let imagePath: string | null = null;
-  if (imageFile) {
-    const ext =
-      imageFile.type === "image/png"
-        ? "png"
-        : imageFile.type === "image/webp"
-          ? "webp"
-          : "jpg";
-    imagePath = listingImagePath(user.id, ext);
-    const { error: uploadError } = await db.storage
-      .from(LISTING_IMAGE_BUCKET)
-      .upload(imagePath, imageFile, {
-        contentType: imageFile.type,
-        upsert: false,
-      });
-    if (uploadError) {
-      redirect("/dashboard/sell?error=upload");
-    }
-  }
+  const imagePaths =
+    imageFiles.length > 0
+      ? await uploadListingImages(
+          db,
+          user.id,
+          imageFiles,
+          "/dashboard/sell?error=upload"
+        )
+      : [];
+  const imagePath = imagePaths[0] ?? null;
 
-  const { error } = await db.from("marketplace_listings").insert({
+  // Simpan daftar foto (image_paths, migrasi 80010) bila kolomnya
+  // sudah ada; bila belum, simpan ulang hanya dengan cover
+  // (image_path) agar listing tetap bisa dibuat — foto tambahan
+  // baru tersimpan penuh setelah migrasi dijalankan.
+  const listingRow = {
     seller_id: user.id,
     title,
     category,
@@ -89,12 +136,19 @@ export async function createListing(form: FormData) {
     ownership_confirmed: true,
     status: "active",
     image_path: imagePath,
+  };
+  let { error } = await db.from("marketplace_listings").insert({
+    ...listingRow,
+    image_paths: imagePaths.length > 0 ? imagePaths : null,
   });
+  if (error && isMissingImagePathsColumn(error)) {
+    ({ error } = await db.from("marketplace_listings").insert(listingRow));
+  }
 
   if (error) {
     // Listing gagal disimpan: bersihkan objek yang telanjur terunggah.
-    if (imagePath) {
-      await db.storage.from(LISTING_IMAGE_BUCKET).remove([imagePath]);
+    if (imagePaths.length > 0) {
+      await db.storage.from(LISTING_IMAGE_BUCKET).remove(imagePaths);
     }
     redirect("/dashboard/sell?error=database");
   }
@@ -252,66 +306,91 @@ export async function updateListing(form: FormData) {
 
   if (!user) redirect("/login");
 
-  // Gambar pengganti (opsional): validasi sama seperti saat membuat.
-  const imageValue = form.get("image");
-  const imageFile =
-    imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
-  if (validateListingImage(imageFile) !== null) {
+  // Foto pengganti (opsional, boleh beberapa): validasi sama seperti
+  // saat membuat. Bila ada foto baru, foto itu mengganti SEMUA foto
+  // lama; bila tidak ada, foto lama tetap dipakai.
+  const imageFiles = collectListingFiles(form);
+  if (validateListingImages(imageFiles) !== null) {
     redirect(`/dashboard/my-listings/${id}/edit?error=image`);
   }
 
-  // Path gambar lama, untuk dibersihkan bila diganti.
+  // Path foto lama, untuk dibersihkan bila diganti. select("*")
+  // sengaja dipakai: kolom image_paths mungkin belum ada (migrasi
+  // 80010 belum jalan) dan select eksplisit atas kolom yang belum
+  // ada akan menggagalkan seluruh query.
   const { data: current } = await db
     .from("marketplace_listings")
-    .select("image_path")
+    .select("*")
     .eq("id", id)
     .eq("seller_id", user.id)
     .maybeSingle();
+  const currentPaths: string[] = [
+    ...(Array.isArray(current?.image_paths)
+      ? current.image_paths.filter(
+          (p: unknown): p is string => typeof p === "string" && p.length > 0
+        )
+      : []),
+    ...(typeof current?.image_path === "string" && current.image_path
+      ? [current.image_path]
+      : []),
+  ].filter((p, i, all) => all.indexOf(p) === i);
 
+  let imagePaths: string[] = [];
   let imagePath: string | null | undefined;
-  if (imageFile) {
-    const ext =
-      imageFile.type === "image/png"
-        ? "png"
-        : imageFile.type === "image/webp"
-          ? "webp"
-          : "jpg";
-    imagePath = listingImagePath(user.id, ext);
-    const { error: uploadError } = await db.storage
-      .from(LISTING_IMAGE_BUCKET)
-      .upload(imagePath, imageFile, {
-        contentType: imageFile.type,
-        upsert: false,
-      });
-    if (uploadError) {
-      redirect(`/dashboard/my-listings/${id}/edit?error=upload`);
-    }
+  if (imageFiles.length > 0) {
+    imagePaths = await uploadListingImages(
+      db,
+      user.id,
+      imageFiles,
+      `/dashboard/my-listings/${id}/edit?error=upload`
+    );
+    imagePath = imagePaths[0] ?? null;
   }
 
-  const { data, error } = await db.from("marketplace_listings")
-    .update(
-      imagePath === undefined
-        ? { title, category, description, price }
-        : { title, category, description, price, image_path: imagePath }
-    )
+  const baseUpdate = { title, category, description, price };
+  const imageUpdate =
+    imagePath === undefined
+      ? baseUpdate
+      : {
+          ...baseUpdate,
+          image_path: imagePath,
+          image_paths: imagePaths.length > 0 ? imagePaths : null,
+        };
+  let { data, error } = await db
+    .from("marketplace_listings")
+    .update(imageUpdate)
     .eq("id", id)
     .eq("seller_id", user.id)
     .select("id")
     .maybeSingle();
+  if (error && imagePath !== undefined && isMissingImagePathsColumn(error)) {
+    ({ data, error } = await db
+      .from("marketplace_listings")
+      .update(
+        imagePath === undefined
+          ? baseUpdate
+          : { ...baseUpdate, image_path: imagePath }
+      )
+      .eq("id", id)
+      .eq("seller_id", user.id)
+      .select("id")
+      .maybeSingle());
+  }
 
   if (error || !data) {
-    if (imagePath) {
-      await db.storage.from(LISTING_IMAGE_BUCKET).remove([imagePath]);
+    if (imagePaths.length > 0) {
+      await db.storage.from(LISTING_IMAGE_BUCKET).remove(imagePaths);
     }
     redirect(`/dashboard/my-listings/${id}/edit?error=database`);
   }
 
-  // Gambar lama dihapus bila memungkinkan; kegagalan hapus tidak
+  // Foto lama dihapus bila memungkinkan; kegagalan hapus tidak
   // menggagalkan edit yang sudah tersimpan.
-  if (imagePath && current?.image_path && current.image_path !== imagePath) {
-    await db.storage
-      .from(LISTING_IMAGE_BUCKET)
-      .remove([current.image_path]);
+  if (imagePaths.length > 0) {
+    const stale = currentPaths.filter((p) => !imagePaths.includes(p));
+    if (stale.length > 0) {
+      await db.storage.from(LISTING_IMAGE_BUCKET).remove(stale);
+    }
   }
 
   revalidatePath("/dashboard");

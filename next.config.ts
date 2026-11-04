@@ -2,6 +2,15 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // Batas pengiriman formulir Server Action dinaikkan dari bawaan
+    // 1 MB ke 100 MB agar beberapa foto bisa terkirim dalam satu
+    // formulir listing. Ini batas teknis framework, BUKAN batas
+    // ukuran per foto: kode aplikasi tidak lagi menolak foto
+    // berdasarkan MB (perintah Tuan 4 Nov 2026). Batas praktis
+    // akhir tetap mengikuti platform hosting/penyimpanan.
+    serverActions: { bodySizeLimit: "100mb" },
+  },
   async redirects() {
     return [
       // Panel admin pindah dari /dashboard/admin ke area /admin

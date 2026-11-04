@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { updateListing } from "@/app/marketplace-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { listingImagePublicUrl } from "@/lib/listing-image";
+import { listingImagePaths, listingImagePublicUrls } from "@/lib/listing-image";
+import ListingPhotoPicker from "@/components/ListingPhotoPicker";
 import SubmitButton from "@/components/SubmitButton";
 
 const categories = [
@@ -26,7 +27,7 @@ const errorCopy: Record<string, string> = {
     "Data listing belum valid. Judul 5–100 karakter, deskripsi 20–3000 karakter, harga minimal Rp1.000, dan kategori harus dipilih.",
   database: "Perubahan gagal disimpan. Periksa koneksi dan coba lagi.",
   image:
-    "Gambar tidak valid. Pakai JPG, PNG, atau WebP, maksimal 5 MB.",
+    "Gambar tidak valid. Pakai JPG, PNG, atau WebP.",
   upload:
     "Gambar gagal diunggah. Periksa koneksi dan coba lagi.",
 };
@@ -46,7 +47,10 @@ export default async function EditListing({
 
   const { data: item } = await db
     .from("marketplace_listings")
-    .select("id,title,category,description,price,status,image_path")
+    // select("*") sengaja dipakai: kolom image_paths mungkin belum
+    // ada (migrasi 80010 belum jalan) dan select eksplisit atas kolom
+    // yang belum ada akan menggagalkan seluruh query.
+    .select("*")
     .eq("id", id)
     .eq("seller_id", user.id)
     .maybeSingle();
@@ -55,7 +59,10 @@ export default async function EditListing({
 
   const editable = item.status === "active" || item.status === "paused";
   const { url: supabaseUrl } = getSupabaseEnv();
-  const currentImageUrl = listingImagePublicUrl(supabaseUrl, item.image_path);
+  const currentImageUrls = listingImagePublicUrls(
+    supabaseUrl,
+    listingImagePaths(item)
+  );
 
   return (
     <section className="dashmain">
@@ -79,20 +86,26 @@ export default async function EditListing({
           )}
           <form action={updateListing} className="market-form" encType="multipart/form-data">
             <input type="hidden" name="listing_id" value={item.id} />
-            {currentImageUrl ? (
-              <p>
-                Gambar saat ini:<br />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={currentImageUrl} alt={item.title} style={{ maxWidth: 240, borderRadius: 8, marginTop: 8 }} />
-              </p>
+            {currentImageUrls.length > 0 ? (
+              <div>
+                <span>Foto saat ini:</span>
+                <div className="photo-picker" style={{ marginTop: 8 }}>
+                  {currentImageUrls.map((url, i) => (
+                    <span className="photo-tile" key={url}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={`Foto ${i + 1}`} />
+                      <span className="photo-tile-badge">
+                        {i === 0 ? "Cover" : `Foto ${i + 1}`}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <p>Belum ada gambar cover.</p>
+              <p>Belum ada foto.</p>
             )}
-            <label>
-              Ganti gambar (opsional)
-              <input name="image" type="file" accept="image/jpeg,image/png,image/webp" />
-            </label>
-            <p>Kosongkan untuk memakai gambar yang sudah ada. JPG, PNG, atau WebP, maksimal 5 MB.</p>
+            <ListingPhotoPicker label="Ganti semua foto (opsional)" />
+            <p>Kosongkan untuk memakai foto yang sudah ada. Bila memilih foto baru, semua foto lama diganti. JPG, PNG, atau WebP.</p>
             <label>
               Nama listing
               <input

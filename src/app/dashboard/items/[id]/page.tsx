@@ -4,8 +4,9 @@ import { requestTransaction } from "@/app/marketplace-actions";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { loadDisplayNames, displayNameFor } from "@/lib/admin-view";
-import { listingImagePublicUrl } from "@/lib/listing-image";
+import { listingImagePaths, listingImagePublicUrls } from "@/lib/listing-image";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import ListingGallery from "@/components/ListingGallery";
 import SubmitButton from "@/components/SubmitButton";
 
 export default async function Item({ params }: { params: Promise<{ id: string }> }) {
@@ -32,17 +33,24 @@ export default async function Item({ params }: { params: Promise<{ id: string }>
   }
   const nameMap = await loadDisplayNames(db, [item.seller_id]);
   const { url: supabaseUrl } = getSupabaseEnv();
-  const imageUrl = listingImagePublicUrl(supabaseUrl, item.image_path);
+  const imageUrls = listingImagePublicUrls(
+    supabaseUrl,
+    listingImagePaths(item)
+  );
 
   return (
     <section className="dashmain">
       <section className="market-detail">
-        {imageUrl ? (
-          <div className="shop-hero-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imageUrl} alt={item.title} />
-            {isStaffSeller && <span className="shop-badge">Rekber Terpilih</span>}
-          </div>
+        {imageUrls.length > 0 ? (
+          <ListingGallery
+            urls={imageUrls}
+            title={item.title}
+            badge={
+              isStaffSeller ? (
+                <span className="shop-badge">Rekber Terpilih</span>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="shop-hero-lg">
             <span className="shop-hero-empty">{item.category}<br />Tanpa gambar</span>
